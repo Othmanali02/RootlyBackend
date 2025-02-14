@@ -55,22 +55,23 @@ async function modifyOntologies() {
 }
 
 async function getAllOntologies() {
-	const baseUrl = "https://cropontology.org/brapi/v1/variables/";
+	const baseUrl = "http://127.0.0.1:5900/brapi/v2/variables";
 	let results = [];
 
-	for (let i = 320; i <= 400; i++) {
+	for (let i = 998; i <= 1000; i++) {
 		try {
-			const response = await axios.get(`${baseUrl}CO_${i}`);
+			const response = await axios.get(`${baseUrl}?ontologyDbId=CO_${i}`);
 			console.log(`Fetched CO_${i}`);
 
 			let totalPages = response.data.metadata.pagination.totalPages;
-			console.log(response.data.metadata.pagination);
+			console.log(totalPages);
+
 
 			for (let j = 0; j < totalPages; j++) {
-				const response2 = await axios.get(`${baseUrl}CO_${i}?page=${j}`);
+				const response2 = await axios.get(`${baseUrl}?ontologyDbId=CO_${i}?page=${j}`);
 				let pagedData = response2.data;
 
-				console.log(pagedData.result.length);
+				console.log(pagedData.result);
 
 				for (k = 0; k < pagedData.result.length; k++) {
 					results.push({
@@ -94,8 +95,8 @@ async function getAllOntologies() {
 		}
 	}
 
-	fs.writeFileSync("cropOntology.json", JSON.stringify(results, null, 2));
+	fs.writeFileSync("cropOntology1.json", JSON.stringify(results, null, 2));
 	return results;
 }
 
-module.exports = modifyOntologies;
+module.exports = getAllOntologies;
