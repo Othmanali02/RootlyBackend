@@ -6,6 +6,22 @@ const generateID = require("../services/tools.js");
 
 const teamRouter = express.Router();
 
+async function getListOwner(ownerId) {
+	try {
+		const bRowURL = `https://portal.ardbase.org/api/database/rows/table/675/${ownerId}/?user_field_names=true`;
+
+		const response = await axios.get(bRowURL, {
+			headers: {
+				Authorization: "Token XdaKz1bZXgGVgX6MQzO0qAXa1X7Vp8uJ",
+				"Content-Type": "application/json",
+			},
+		});
+		return response.data.Email;
+	} catch (error) {
+		console.log(error);
+	}
+}
+
 teamRouter.post(
 	"/getUserTeams",
 	expressAsyncHandler(async (req, res) => {
@@ -26,24 +42,22 @@ teamRouter.post(
 			let sharedTeams = [];
 
 			for (let i = 0; i < teamArr.length; i++) {
-			
 				if (teamArr[i]["Leader"].length > 0) {
 					if (teamArr[i]["Leader"][0].value === req.body.userId) {
 						teamList.push(teamArr[i]);
 					}
 				}
 
-                if(teamArr[i]["User ID"].length > 0){
-                    let usersArry = teamArr[i]["User ID"];
-                    for (let j = 0; j < usersArry.length; j++){
-                        console.log(usersArry[j]["value"]);
+				if (teamArr[i]["User ID"].length > 0) {
+					let usersArry = teamArr[i]["User ID"];
+					for (let j = 0; j < usersArry.length; j++) {
+						console.log(usersArry[j]["value"]);
 
-                        if(usersArry[j]["value"] === req.body.userId){
-                            sharedTeams.push(teamArr[i]);
-                        }
-                    }
-                }
-
+						if (usersArry[j]["value"] === req.body.userId) {
+							sharedTeams.push(teamArr[i]);
+						}
+					}
+				}
 			}
 			console.log(sharedTeams);
 			res.status(200).json({ teamList: teamList, sharedTeams: sharedTeams });
@@ -57,12 +71,8 @@ teamRouter.post(
 	"/getTeamInfo",
 	expressAsyncHandler(async (req, res) => {
 		try {
-
-            console.log(req.body);
-
-            
 			const bRowURL =
-				"https://portal.ardbase.org/api/database/rows/table/676/?user_field_names=true";
+				"https://portal.ardbase.org/api/database/rows/table/678/?user_field_names=true";
 
 			const response = await axios.get(bRowURL, {
 				headers: {
@@ -73,16 +83,12 @@ teamRouter.post(
 
 			let items = response.data.results;
 
-			const matchedList = items.filter(
-				(item) => item["List ID"] === req.body.listId
+			const matchedTeam = items.filter(
+				(item) => item["Team ID"] === req.body.teamId
 			);
 
-			let listName = matchedList[0].Name;
-
-			// let owner = items.Owner[0].value; // compute the id of the user with another bRow request
-
 			const bRowURL2 =
-				"https://portal.ardbase.org/api/database/rows/table/677/?user_field_names=true&size=200";
+				"https://portal.ardbase.org/api/database/rows/table/676/?user_field_names=true&size=200";
 
 			const response1 = await axios.get(bRowURL2, {
 				headers: {
@@ -91,33 +97,49 @@ teamRouter.post(
 				},
 			});
 
-			let listContent = response1.data.results;
+			let listInformation = response1.data.results;
 
-			const matchedItems = listContent.filter((item) =>
-				item["List ID"].some((list) => list.value === req.body.listId)
-			);
+			let teamLists = matchedTeam[0].Lists;
+			let matchinglists = [];
 
-			variableDbIds = [];
-			for (let i = 0; i < matchedItems.length; i++) {
-				variableDbIds.push(matchedItems[i]["Variable Db Id"]);
+			for (let teamList of teamLists) {
+				const matchingList = listInformation.find(
+					(list) => list["List ID"] === teamList.value
+				);
+ 
+				if (matchingList) {
+					let userEmail = await getListOwner(matchingList.Owner[0].id);
+
+					matchinglists.push({
+						listName: matchingList.Name,
+						listId: matchingList["List ID"],
+						owner: userEmail,
+						length: matchingList["Length"],
+					});
+				}
 			}
 
-			const cropOntologyUrl = "http://127.0.0.1:5900/brapi/v2/search/variables";
+			console.log(matchinglists);
 
-			const reqBody = {
-				observationVariableDbIds: variableDbIds,
-			};
+			// I will basically get the query ready before calling the cropOntology
 
-			console.log(reqBody);
+			// const cropOntologyUrl = "http://127.0.0.1:5900/brapi/v2/search/variables";
 
-			const response2 = await axios.post(cropOntologyUrl, reqBody);
+			// const reqBody = {
+			// 	observationVariableDbIds: variableDbIds,
+			// };
 
-			let resBody = {
-				listName: listName,
-				items: response2.data.result,
-			};
+			// console.log(reqBody);
 
-			res.status(response.status).json(resBody);
+			// const response2 = await axios.post(cropOntologyUrl, reqBody);
+
+			// let resBody = {
+			// 	listName: listName,
+			// 	items: response2.data.result,
+			// };
+
+			// res.status(response.status).json(resBody);
+			res.status(response.status).json(matchinglists);
 		} catch (error) {
 			console.error("Error making the POST request:", error);
 			res

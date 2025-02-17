@@ -3,7 +3,7 @@ const expressAsyncHandler = require("express-async-handler");
 require("dotenv").config();
 const axios = require("axios");
 const generateID = require("../services/tools.js");
- 
+
 const listRouter = express.Router();
 
 listRouter.post(
@@ -182,6 +182,8 @@ listRouter.post(
 				const listContentData = {
 					"List Content ID": await generateID(),
 					"List ID": [listId],
+					"List Name": req.body.listName, // this is a redundancy in the database design
+					// but it will save one request on multiple pages that's why it exists
 					"Variable Db Id": traits[i].observationVariableDbId,
 				};
 
