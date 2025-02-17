@@ -6,7 +6,7 @@ const generateID = require("../services/tools.js");
 
 const teamRouter = express.Router();
 
-async function getListOwner(ownerId) {
+async function getUserByID(ownerId) {
 	try {
 		const bRowURL = `https://portal.ardbase.org/api/database/rows/table/675/${ownerId}/?user_field_names=true`;
 
@@ -16,11 +16,102 @@ async function getListOwner(ownerId) {
 				"Content-Type": "application/json",
 			},
 		});
-		return response.data.Email;
+		console.log(response.data);
+		return response.data;
 	} catch (error) {
 		console.log(error);
 	}
 }
+
+teamRouter.patch(
+	"/removeMember",
+	expressAsyncHandler(async (req, res) => {
+		try {
+			let memberID = req.body.memberID;
+			let teamID = req.body.teamId;
+			let teamMembers = req.body.teamMembers;
+			let currTeamMembers = [];
+			
+			for (let i = 0; i < teamMembers.length; i++) {
+				if(teamMembers[i].value !== memberID)
+					currTeamMembers.push(teamMembers[i].value);
+			}
+
+		
+			const bRowURL = `https://portal.ardbase.org/api/database/rows/table/678/${teamID}/?user_field_names=true`;
+
+			const response = await axios.patch(
+				bRowURL,
+				{ "User ID": currTeamMembers },
+				{
+					headers: {
+						Authorization: "Token XdaKz1bZXgGVgX6MQzO0qAXa1X7Vp8uJ",
+						"Content-Type": "application/json",
+					},
+				}
+			);
+			console.log(response);
+			res.status(200).json({ message: "Removed" });
+		} catch (error) {
+			console.log(error);
+		}
+	})
+);
+
+teamRouter.patch(
+	"/addMember",
+	expressAsyncHandler(async (req, res) => {
+		try {
+			let memberEmail = req.body.memberEmail;
+			let teamID = req.body.teamId;
+			let teamMembers = req.body.teamMembers;
+			let currTeamMembers = [];
+			
+			for (let i = 0; i < teamMembers.length; i++) {
+				currTeamMembers.push(teamMembers[i].value);
+			}
+
+			console.log(currTeamMembers);
+			const usersURL =
+				"https://portal.ardbase.org/api/database/rows/table/675/?user_field_names=true";
+
+			const response1 = await axios.get(usersURL, {
+				headers: {
+					Authorization: "Token XdaKz1bZXgGVgX6MQzO0qAXa1X7Vp8uJ",
+					"Content-Type": "application/json",
+				},
+			});
+
+			const matchedUser = response1.data.results.filter(
+				(item) => item["Email"] === memberEmail
+			);
+
+			currTeamMembers.push(matchedUser[0]["User ID"]);
+			console.log(currTeamMembers);
+
+			const bRowURL = `https://portal.ardbase.org/api/database/rows/table/678/${teamID}/?user_field_names=true`;
+
+			const response = await axios.patch(
+				bRowURL,
+				{ "User ID": currTeamMembers },
+				{
+					headers: {
+						Authorization: "Token XdaKz1bZXgGVgX6MQzO0qAXa1X7Vp8uJ",
+						"Content-Type": "application/json",
+					},
+				}
+			);
+
+			// add logic to send an email to the client with the invite
+
+
+			console.log(response);
+			res.status(200).json({ userObj: matchedUser[0] });
+		} catch (error) {
+			console.log(error);
+		}
+	})
+);
 
 teamRouter.post(
 	"/getUserTeams",
@@ -87,6 +178,8 @@ teamRouter.post(
 				(item) => item["Team ID"] === req.body.teamId
 			);
 
+			const teamInfo = matchedTeam[0];
+
 			const bRowURL2 =
 				"https://portal.ardbase.org/api/database/rows/table/676/?user_field_names=true&size=200";
 
@@ -106,40 +199,36 @@ teamRouter.post(
 				const matchingList = listInformation.find(
 					(list) => list["List ID"] === teamList.value
 				);
- 
+
 				if (matchingList) {
-					let userEmail = await getListOwner(matchingList.Owner[0].id);
+					let user = await getUserByID(matchingList.Owner[0].id);
 
 					matchinglists.push({
 						listName: matchingList.Name,
 						listId: matchingList["List ID"],
-						owner: userEmail,
+						owner: user.Email,
 						length: matchingList["Length"],
 					});
 				}
 			}
 
-			console.log(matchinglists);
+			// console.log(matchedTeam[0].Leader);
+			// console.log(matchedTeam[0]["User ID"]);
 
-			// I will basically get the query ready before calling the cropOntology
+			let members = [];
 
-			// const cropOntologyUrl = "http://127.0.0.1:5900/brapi/v2/search/variables";
+			for (let i = 0; i < matchedTeam[0]["User ID"].length; i++) {
+				members.push(await getUserByID(matchedTeam[0]["User ID"][i].id));
+			}
+			console.log(members);
+			let resBody = {
+				teamInfo: teamInfo,
+				lists: matchinglists,
+				owner: await getUserByID(matchedTeam[0].Leader[0].id),
+				members: members,
+			};
 
-			// const reqBody = {
-			// 	observationVariableDbIds: variableDbIds,
-			// };
-
-			// console.log(reqBody);
-
-			// const response2 = await axios.post(cropOntologyUrl, reqBody);
-
-			// let resBody = {
-			// 	listName: listName,
-			// 	items: response2.data.result,
-			// };
-
-			// res.status(response.status).json(resBody);
-			res.status(response.status).json(matchinglists);
+			res.status(response.status).json(resBody);
 		} catch (error) {
 			console.error("Error making the POST request:", error);
 			res
