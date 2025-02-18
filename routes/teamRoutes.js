@@ -27,6 +27,8 @@ teamRouter.patch(
 	"/removeMember",
 	expressAsyncHandler(async (req, res) => {
 		try {
+			// make sure to decode the token and make sure it is the owner that is calling this
+
 			let memberID = req.body.memberID;
 			let teamID = req.body.teamId;
 			let teamMembers = req.body.teamMembers;
@@ -110,12 +112,10 @@ teamRouter.patch(
 
 			// add logic to send an email to the client with the invite
 
-			res
-				.status(200)
-				.json({
-					userObj: matchedUser[0],
-					newMembers: response.data["User ID"],
-				});
+			res.status(200).json({
+				userObj: matchedUser[0],
+				newMembers: response.data["User ID"],
+			});
 		} catch (error) {
 			console.log(error);
 		}
@@ -316,5 +316,71 @@ teamRouter.post(
 		}
 	})
 );
+
+teamRouter.get("/status/:teamId", async (req, res) => {
+	let UUID = req.cookies.UUID || null;
+	let teamId = req.params.teamId;
+
+	try {
+		let isMember = false;
+		let isOwner = false;
+
+		const bRowURL1 = `https://portal.ardbase.org/api/database/rows/table/678/?user_field_names=true`;
+
+		const response1 = await axios.get(bRowURL1, {
+			headers: {
+				Authorization: "Token XdaKz1bZXgGVgX6MQzO0qAXa1X7Vp8uJ",
+				"Content-Type": "application/json",
+			},
+		});
+
+		for (let team of response1.data.results) {
+			const teamMatch = team["Team ID"] === teamId;
+
+			const ownerMatch = team["Leader"][0].value === UUID;
+			console.log(ownerMatch);
+
+			const userMatch = team["User ID"].some((user) => user.value === UUID);
+
+			console.log(team.Name);
+			console.log("********************************");
+			console.log(ownerMatch);
+			console.log(userMatch);
+			console.log(teamMatch);
+
+			if (teamMatch && userMatch) {
+				isMember = true;
+				isOwner = false;
+				break;
+			} else if (teamMatch && ownerMatch) {
+				isOwner = true;
+				isMember = false;
+				break;
+			}
+		}
+
+		console.log(isOwner);
+		console.log(isMember);
+
+		if (isOwner && !isMember) {
+			res.json({
+				isOwner: true,
+				isMember: false,
+			});
+		} else if (!isOwner && isMember) {
+			res.json({
+				isOwner: false,
+				isMember: true,
+			});
+		} else {
+			res.json({
+				isOwner: false,
+				isMember: false,
+			});
+		}
+	} catch (err) {
+		console.log(err);
+	}
+});
 
 module.exports = teamRouter;

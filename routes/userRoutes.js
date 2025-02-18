@@ -3,6 +3,7 @@ const expressAsyncHandler = require("express-async-handler");
 const fs = require("fs");
 require("dotenv").config();
 const authUtils = require("../auth-util.js");
+const axios = require("axios");
 const pushCredentialsToBaserow = require("../services/services.js");
 const cookieParser = require("cookie-parser");
 
@@ -19,7 +20,6 @@ authUtils.buildAuthClient(
 );
 
 const userRouter = express.Router();
-
 
 userRouter.get("/login", function (req, res, next) {
 	res.redirect(authUtils.getAuthURL(OAuthClient));
@@ -120,5 +120,75 @@ userRouter.get("/user-info", async (req, res) => {
 		res.status(400).json({ message: "No token provided" });
 	}
 });
+
+userRouter.get("/status/:listId", async (req, res) => {
+	let UUID = req.cookies.UUID || null;
+
+	try {
+		let isMember = false;
+		let isOwner = false;
+
+		// checks if the user id exists in the list
+		const bRowURL = `https://portal.ardbase.org/api/database/rows/table/676/?user_field_names=true`;
+
+		const response = await axios.get(bRowURL, {
+			headers: {
+				Authorization: "Token XdaKz1bZXgGVgX6MQzO0qAXa1X7Vp8uJ",
+				"Content-Type": "application/json",
+			},
+		});
+
+		const listOwner = response.data.results.filter(
+			(item) =>
+				item["List ID"] === req.params.listId && item.Owner[0].value === UUID
+		);
+
+		console.log(listOwner[0]);
+		if (listOwner[0]) isOwner = true;
+
+		// checks if the user exists in a team that has that list in it
+		const bRowURL1 = `https://portal.ardbase.org/api/database/rows/table/678/?user_field_names=true`;
+
+		const response1 = await axios.get(bRowURL1, {
+			headers: {
+				Authorization: "Token XdaKz1bZXgGVgX6MQzO0qAXa1X7Vp8uJ",
+				"Content-Type": "application/json",
+			},
+		});
+
+		for (let team of response1.data.results) {
+			const listMatch = team.Lists.some(
+				(list) => list.value === req.params.listId
+			);
+
+			const userMatch = team["User ID"].some((user) => user.value === UUID);
+			if (listMatch && userMatch) {
+				isMember = true;
+				break;
+			}
+		}
+
+		if (isOwner && !isMember) {
+			res.json({
+				isOwner: true,
+				isMember: false,
+			});
+		} else if (!isOwner && isMember) {
+			res.json({
+				isOwner: false,
+				isMember: true,
+			});
+		} else {
+			res.json({
+				isOwner: false,
+				isMember: false,
+			});
+		}
+	} catch (err) {
+		console.log(err);
+	}
+});
+
+
 
 module.exports = userRouter;
