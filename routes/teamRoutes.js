@@ -31,13 +31,17 @@ teamRouter.patch(
 			let teamID = req.body.teamId;
 			let teamMembers = req.body.teamMembers;
 			let currTeamMembers = [];
-			
+
+			console.log(memberID);
+			// console.log(teamMembers);
+
 			for (let i = 0; i < teamMembers.length; i++) {
-				if(teamMembers[i].value !== memberID)
-					currTeamMembers.push(teamMembers[i].value);
+				if (teamMembers[i].id !== memberID)
+					currTeamMembers.push(teamMembers[i].id);
 			}
 
-		
+			console.log(currTeamMembers);
+
 			const bRowURL = `https://portal.ardbase.org/api/database/rows/table/678/${teamID}/?user_field_names=true`;
 
 			const response = await axios.patch(
@@ -50,8 +54,12 @@ teamRouter.patch(
 					},
 				}
 			);
-			console.log(response);
-			res.status(200).json({ message: "Removed" });
+
+			console.log(response.data);
+
+			res
+				.status(200)
+				.json({ message: "Removed", newMembers: response.data["User ID"] });
 		} catch (error) {
 			console.log(error);
 		}
@@ -66,12 +74,11 @@ teamRouter.patch(
 			let teamID = req.body.teamId;
 			let teamMembers = req.body.teamMembers;
 			let currTeamMembers = [];
-			
+
 			for (let i = 0; i < teamMembers.length; i++) {
 				currTeamMembers.push(teamMembers[i].value);
 			}
 
-			console.log(currTeamMembers);
 			const usersURL =
 				"https://portal.ardbase.org/api/database/rows/table/675/?user_field_names=true";
 
@@ -87,7 +94,6 @@ teamRouter.patch(
 			);
 
 			currTeamMembers.push(matchedUser[0]["User ID"]);
-			console.log(currTeamMembers);
 
 			const bRowURL = `https://portal.ardbase.org/api/database/rows/table/678/${teamID}/?user_field_names=true`;
 
@@ -104,9 +110,12 @@ teamRouter.patch(
 
 			// add logic to send an email to the client with the invite
 
-
-			console.log(response);
-			res.status(200).json({ userObj: matchedUser[0] });
+			res
+				.status(200)
+				.json({
+					userObj: matchedUser[0],
+					newMembers: response.data["User ID"],
+				});
 		} catch (error) {
 			console.log(error);
 		}
