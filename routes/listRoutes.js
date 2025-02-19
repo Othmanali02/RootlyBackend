@@ -292,6 +292,7 @@ listRouter.post(
 			);
 
 			let listName = matchedList[0].Name;
+			let listBrowID = matchedList[0].id;
 
 			// let owner = items.Owner[0].value; // compute the id of the user with another bRow request
 
@@ -311,24 +312,43 @@ listRouter.post(
 				item["List ID"].some((list) => list.value === req.body.listId)
 			);
 
-			variableDbIds = [];
+			let variableDbIds = [];
+			let baserowIds = {};
+
+			// Build a map of Variable Db Ids to baserowId
 			for (let i = 0; i < matchedItems.length; i++) {
-				variableDbIds.push(matchedItems[i]["Variable Db Id"]);
+				const variableDbId = matchedItems[i]["Variable Db Id"];
+				const baserowID = matchedItems[i].id;
+				variableDbIds.push(variableDbId);
+				baserowIds[variableDbId] = baserowID; // Map each variableDbId to its corresponding baserowID
 			}
 
 			const cropOntologyUrl = "http://127.0.0.1:5900/brapi/v2/search/variables";
-
 			const reqBody = {
 				observationVariableDbIds: variableDbIds,
 			};
 
 			console.log(reqBody);
 
+			let finalRes = [];
 			const response2 = await axios.post(cropOntologyUrl, reqBody);
+
+			for (let i = 0; i < response2.data.result.length; i++) {
+				const cropData = response2.data.result[i];
+				const observationVariableDbId = cropData.observationVariableDbId;
+
+				if (baserowIds.hasOwnProperty(observationVariableDbId)) {
+					finalRes.push({
+						cropOntologyData: cropData,
+						baserowID: baserowIds[observationVariableDbId],
+					});
+				}
+			}
 
 			let resBody = {
 				listName: listName,
-				items: response2.data.result,
+				items: finalRes,
+				listBrowID: listBrowID,
 			};
 
 			res.status(response.status).json(resBody);
@@ -356,6 +376,128 @@ listRouter.get(
 			});
 
 			res.status(response.status).json(response.data);
+		} catch (error) {
+			console.error("Error making the POST request:", error);
+			res
+				.status(500)
+				.json({ message: "Internal Server Error", error: error.message });
+		}
+	})
+);
+
+listRouter.post(
+	"/removeVariable",
+	expressAsyncHandler(async (req, res) => {
+		try {
+			let listBrowID = req.body.listBrowID;
+			let listContentBrowID = req.body.listContentBrowID;
+
+			const delRow = `https://data.ardbase.org/api/database/rows/table/2161/${listContentBrowID}/?user_field_names=true`;
+
+			const deleteResponse = await axios.delete(delRow, {
+				headers: {
+					Authorization: `Token ${process.env.BASEROW_TOKEN}`,
+					"Content-Type": "application/json",
+				},
+			});
+
+
+			const getRow = `https://data.ardbase.org/api/database/rows/table/2159/${listBrowID}/?user_field_names=true`;
+
+			const response = await axios.get(getRow, {
+				headers: {
+					Authorization: `Token ${process.env.BASEROW_TOKEN}`,
+					"Content-Type": "application/json",
+				},
+			});
+
+			let newLength = Number(response.data.Length) - 1;
+
+			const patchRow = `https://data.ardbase.org/api/database/rows/table/2159/${listBrowID}/?user_field_names=true`;
+
+			const response1 = await axios.patch(
+				patchRow,
+				{
+					Length: newLength + "",
+				},
+				{
+					headers: {
+						Authorization: `Token ${process.env.BASEROW_TOKEN}`,
+						"Content-Type": "application/json",
+					},
+				}
+			);
+
+			console.log(response1.data);
+			res.status(200).json({ message: "Variables Added", updatedList: response.data.result });
+		} catch (error) {
+			console.error("Error making the POST request:", error);
+			res
+				.status(500)
+				.json({ message: "Internal Server Error", error: error.message });
+		}
+	})
+);
+
+listRouter.post(
+	"/addVariable",
+	expressAsyncHandler(async (req, res) => {
+		try {
+			let listId = req.body.listId;
+			let traits = req.body.selectedVariables;
+
+			const secondUrl =
+				"https://data.ardbase.org/api/database/rows/table/2161/?user_field_names=true";
+
+			for (let i = 0; i < traits.length; i++) {
+				const listContentData = {
+					"List Content ID": await generateID(),
+					"List ID": [listId],
+					"List Name": req.body.listName, // this is a redundancy in the database design
+					// but it will save one request on multiple pages that's why it exists
+					"Variable Db Id": traits[i].observationVariableDbId,
+				};
+
+				console.log(listContentData);
+
+				const response1 = await axios.post(secondUrl, listContentData, {
+					headers: {
+						Authorization: `Token ${process.env.BASEROW_TOKEN}`,
+						"Content-Type": "application/json",
+					},
+				});
+
+				console.log(response1);
+			}
+
+			const getRow = `https://data.ardbase.org/api/database/rows/table/2159/${req.body.listBrowID}/?user_field_names=true`;
+
+			const response = await axios.get(getRow, {
+				headers: {
+					Authorization: `Token ${process.env.BASEROW_TOKEN}`,
+					"Content-Type": "application/json",
+				},
+			});
+
+			let newLength = Number(response.data.Length) + traits.length;
+
+			const patchRow = `https://data.ardbase.org/api/database/rows/table/2159/${req.body.listBrowID}/?user_field_names=true`;
+
+			const response1 = await axios.patch(
+				patchRow,
+				{
+					Length: newLength + "",
+				},
+				{
+					headers: {
+						Authorization: `Token ${process.env.BASEROW_TOKEN}`,
+						"Content-Type": "application/json",
+					},
+				}
+			);
+
+			console.log(response1.data);
+			res.status(200).json({ message: "Variables Added" });
 		} catch (error) {
 			console.error("Error making the POST request:", error);
 			res
