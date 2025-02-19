@@ -2,6 +2,8 @@ const express = require("express");
 const expressAsyncHandler = require("express-async-handler");
 require("dotenv").config();
 const { createObjectCsvWriter } = require("csv-writer");
+const { createObjectCsvStringifier } = require("csv-writer"); // Import the correct CSV writer
+const { Readable } = require("stream");
 const axios = require("axios");
 const generateID = require("../services/tools.js");
 const path = require("path");
@@ -38,9 +40,9 @@ function mapGridscore(dataType) {
 }
 
 function mapJsonData(item) {
-	const categories = item.scale?.validValues?.categories;
-	const min = item.scale?.validValues?.minimumValue ?? 0;
-	const max = item.scale?.validValues?.maximumValue ?? 99999;
+	const categories = item.cropOntologyData.scale?.validValues?.categories;
+	const min = item.cropOntologyData.scale?.validValues?.minimumValue ?? 0;
+	const max = item.cropOntologyData.scale?.validValues?.maximumValue ?? 99999;
 
 	let restrictions = {};
 	if (categories && categories.length > 0) {
@@ -51,30 +53,31 @@ function mapJsonData(item) {
 	}
 
 	return {
-		brapiId: item.observationVariableDbId ?? "",
-		name: item.observationVariableName ?? "",
-		description: item.trait?.description ?? null,
-		dataType: mapGridscore(item.scale?.dataType) ?? "text",
+		brapiId: item.cropOntologyData.observationVariableDbId ?? "",
+		name: item.cropOntologyData.observationVariableName ?? "",
+		description: item.cropOntologyData.trait?.description ?? null,
+		dataType: mapGridscore(item.cropOntologyData.scale?.dataType) ?? "text",
 		allowRepeats: true,
-		setSize: item.setSize ?? 1,
+		setSize: item.cropOntologyData.setSize ?? 1,
 		restrictions:
 			Object.keys(restrictions).length > 0 ? restrictions : undefined,
-		timeframe: item.timeframe ?? null,
+		timeframe: item.cropOntologyData.timeframe ?? null,
 	};
 }
 
 function mapTsvData(item) {
 	return {
-		Name: item.observationVariableName ?? "",
-		"Short Name": item.trait?.traitName ?? "",
-		Description: item.trait?.description ?? "",
-		"Data Type": mapGridscore(item.scale?.dataType) ?? "text",
-		"Unit Name": item.scale?.scaleName ?? "",
-		"Unit Abbreviation": item.scale?.units ?? "",
-		"Unit Descriptions": item.scale?.description ?? "",
-		"Trait categories": item.scale?.validValues?.categories?.join(", ") ?? "",
-		Min: item.scale?.validValues?.minimumValue ?? "",
-		Max: item.scale?.validValues?.maximumValue ?? "",
+		Name: item.cropOntologyData.observationVariableName ?? "",
+		"Short Name": item.cropOntologyData.trait?.traitName ?? "",
+		Description: item.cropOntologyData.trait?.description ?? "",
+		"Data Type": mapGridscore(item.cropOntologyData.scale?.dataType) ?? "text",
+		"Unit Name": item.cropOntologyData.scale?.scaleName ?? "",
+		"Unit Abbreviation": item.cropOntologyData.scale?.units ?? "",
+		"Unit Descriptions": item.cropOntologyData.scale?.description ?? "",
+		"Trait categories":
+			item.cropOntologyData.scale?.validValues?.categories?.join(", ") ?? "",
+		Min: item.cropOntologyData.scale?.validValues?.minimumValue ?? "",
+		Max: item.cropOntologyData.scale?.validValues?.maximumValue ?? "",
 	};
 }
 
@@ -89,9 +92,35 @@ function createTsvFile(listData, listName) {
 		"Unit Name",
 		"Unit Abbreviation",
 		"Unit Descriptions",
-		"Trait categories",
-		"Min",
-		"Max",
+		"Trait categories (comma separated)",
+		"Min (only for numeric traits)",
+		"Max (only for numeric traits)",
+	];
+
+	const tsvContent = [
+		headers.join("\t"), // Join headers with tab
+		...tsvData.map((item) => Object.values(item).join("\t")), // Join each row's values with tab
+	].join("\n");
+
+	const filePath = path.join(__dirname, `${listName}-FieldBook.tsv`);
+
+	return tsvContent;
+}
+
+function createCsvFile(listData, listName) {
+	const tsvData = listData.map(mapTsvData);
+
+	const headers = [
+		"Name",
+		"Short Name",
+		"Description",
+		"Data Type",
+		"Unit Name",
+		"Unit Abbreviation",
+		"Unit Descriptions",
+		"Trait categories (comma separated)",
+		"Min (only for numeric traits)",
+		"Max (only for numeric traits)",
 	];
 
 	const tsvContent = [
@@ -145,13 +174,14 @@ listRouter.post(
 			console.log(req.body.listData);
 
 			const mappedData = req.body.listData.map((item, index) => ({
-				trait: item.observationVariableName ?? null,
-				format: mapFormat(item.scale?.dataType ?? "text"),
-				defaultValue: item.defaultValue ?? null,
-				minimum: item.scale?.validValues?.minimumValue ?? null,
-				maximum: item.scale?.validValues?.maximumValue ?? null,
-				details: item.trait?.description ?? null,
-				categories: item.scale?.validValues?.categories ?? null,
+				trait: item.cropOntologyData.observationVariableName ?? null,
+				format: mapFormat(item.cropOntologyData.scale?.dataType ?? "text"),
+				defaultValue: item.cropOntologyData.defaultValue ?? null,
+				minimum: item.cropOntologyData.scale?.validValues?.minimumValue ?? null,
+				maximum: item.cropOntologyData.scale?.validValues?.maximumValue ?? null,
+				details: item.cropOntologyData.trait?.description ?? null,
+				categories:
+					item.cropOntologyData.scale?.validValues?.categories ?? null,
 				isVisible: true,
 				realPosition: index + 1,
 			}));
@@ -168,33 +198,33 @@ listRouter.post(
 				{ id: "realPosition", title: "realPosition" },
 			];
 
-			const csvWriter = createObjectCsvWriter({
-				path: path.join(__dirname, `${listName}-FieldBook.csv`),
+			const csvStringifier = createObjectCsvStringifier({
 				header: headers,
+				alwaysQuote: true,
 			});
 
-			csvWriter
-				.writeRecords(mappedData)
-				.then(() => {
-					console.log("CSV file created successfully!");
+			const csvContent =
+				csvStringifier.getHeaderString() +
+				csvStringifier.stringifyRecords(mappedData);
 
-					res.download(
-						path.join(__dirname, `${listName}-FieldBook.csv`),
-						"FieldBook.csv",
-						(err) => {
-							if (err) {
-								console.error("Error sending the file:", err);
-								res.status(500).send({ error: "Failed to send the CSV file" });
-							} else {
-								console.log("CSV file sent successfully");
-							}
-						}
-					);
-				})
-				.catch((err) => {
-					console.error("Error creating CSV:", err);
-					res.status(500).send({ error: "Failed to create CSV file" });
-				});
+			const stream = Readable.from(csvContent);
+
+			res.setHeader("Content-Type", "text/csv");
+			res.setHeader(
+				"Content-Disposition",
+				`attachment; filename=${listName}-FieldBook.csv`
+			);
+
+			stream.pipe(res);
+
+			stream.on("end", () => {
+				console.log("CSV file sent successfully!");
+			});
+
+			stream.on("error", (err) => {
+				console.error("Error sending the CSV file:", err);
+				res.status(500).send({ error: "Failed to send the CSV file" });
+			});
 		} catch (error) {
 			console.error("Error making the POST request:", error);
 			res
@@ -401,7 +431,6 @@ listRouter.post(
 				},
 			});
 
-
 			const getRow = `https://data.ardbase.org/api/database/rows/table/2159/${listBrowID}/?user_field_names=true`;
 
 			const response = await axios.get(getRow, {
@@ -429,7 +458,12 @@ listRouter.post(
 			);
 
 			console.log(response1.data);
-			res.status(200).json({ message: "Variables Added", updatedList: response.data.result });
+			res
+				.status(200)
+				.json({
+					message: "Variables Added",
+					updatedList: response.data.result,
+				});
 		} catch (error) {
 			console.error("Error making the POST request:", error);
 			res
