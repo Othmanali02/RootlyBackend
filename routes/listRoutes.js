@@ -44,7 +44,7 @@ function mapJsonData(item) {
 
 	let restrictions = {};
 	if (categories && categories.length > 0) {
-		restrictions.categories = categories; 
+		restrictions.categories = categories;
 	} else if (min !== 0 || max !== 99999) {
 		restrictions.min = min;
 		restrictions.max = max;
@@ -236,11 +236,11 @@ listRouter.post(
 			let email = req.body.email;
 
 			const bRowURL =
-				"https://portal.ardbase.org/api/database/rows/table/675/?user_field_names=true";
+				"https://data.ardbase.org/api/database/rows/table/2158/?user_field_names=true";
 
 			const response = await axios.get(bRowURL, {
 				headers: {
-					Authorization: "Token XdaKz1bZXgGVgX6MQzO0qAXa1X7Vp8uJ",
+					Authorization: `Token ${process.env.BASEROW_TOKEN}`,
 					"Content-Type": "application/json",
 				},
 			});
@@ -253,11 +253,11 @@ listRouter.post(
 			let lists = userObj.Lists;
 
 			for (let i = 0; i < userObj.Lists.length; i++) {
-				const bRowURL = `https://portal.ardbase.org/api/database/rows/table/676/${lists[i].id}/?user_field_names=true`;
+				const bRowURL = `https://data.ardbase.org/api/database/rows/table/2159/${lists[i].id}/?user_field_names=true`;
 
 				const response = await axios.get(bRowURL, {
 					headers: {
-						Authorization: "Token XdaKz1bZXgGVgX6MQzO0qAXa1X7Vp8uJ",
+						Authorization: `Token ${process.env.BASEROW_TOKEN}`,
 						"Content-Type": "application/json",
 					},
 				});
@@ -276,11 +276,11 @@ listRouter.post(
 	expressAsyncHandler(async (req, res) => {
 		try {
 			const bRowURL =
-				"https://portal.ardbase.org/api/database/rows/table/676/?user_field_names=true";
+				"https://data.ardbase.org/api/database/rows/table/2159/?user_field_names=true";
 
 			const response = await axios.get(bRowURL, {
 				headers: {
-					Authorization: "Token XdaKz1bZXgGVgX6MQzO0qAXa1X7Vp8uJ",
+					Authorization: `Token ${process.env.BASEROW_TOKEN}`,
 					"Content-Type": "application/json",
 				},
 			});
@@ -296,11 +296,11 @@ listRouter.post(
 			// let owner = items.Owner[0].value; // compute the id of the user with another bRow request
 
 			const bRowURL2 =
-				"https://portal.ardbase.org/api/database/rows/table/677/?user_field_names=true&size=200";
+				"https://data.ardbase.org/api/database/rows/table/2161/?user_field_names=true&size=200";
 
 			const response1 = await axios.get(bRowURL2, {
 				headers: {
-					Authorization: "Token XdaKz1bZXgGVgX6MQzO0qAXa1X7Vp8uJ",
+					Authorization: `Token ${process.env.BASEROW_TOKEN}`,
 					"Content-Type": "application/json",
 				},
 			});
@@ -346,11 +346,11 @@ listRouter.get(
 	expressAsyncHandler(async (req, res) => {
 		try {
 			const bRowURL =
-				"https://portal.ardbase.org/api/database/rows/table/676/?user_field_names=true";
+				"https://data.ardbase.org/api/database/rows/table/2159/?user_field_names=true";
 
 			const response = await axios.get(bRowURL, {
 				headers: {
-					Authorization: "Token XdaKz1bZXgGVgX6MQzO0qAXa1X7Vp8uJ",
+					Authorization: `Token ${process.env.BASEROW_TOKEN}`,
 					"Content-Type": "application/json",
 				},
 			});
@@ -387,11 +387,11 @@ listRouter.post(
 			// Creating the list in the list table
 
 			const firstUrl =
-				"https://portal.ardbase.org/api/database/rows/table/676/?user_field_names=true";
+				"https://data.ardbase.org/api/database/rows/table/2159/?user_field_names=true";
 
 			const response = await axios.post(firstUrl, req_data, {
 				headers: {
-					Authorization: "Token XdaKz1bZXgGVgX6MQzO0qAXa1X7Vp8uJ",
+					Authorization: `Token ${process.env.BASEROW_TOKEN}`,
 					"Content-Type": "application/json",
 				},
 			});
@@ -399,7 +399,7 @@ listRouter.post(
 			// Creating the lsit content in the list content table
 
 			const secondUrl =
-				"https://portal.ardbase.org/api/database/rows/table/677/?user_field_names=true";
+				"https://data.ardbase.org/api/database/rows/table/2161/?user_field_names=true";
 
 			for (let i = 0; i < requestData.traits.length; i++) {
 				const listContentData = {
@@ -412,7 +412,7 @@ listRouter.post(
 
 				const response1 = await axios.post(secondUrl, listContentData, {
 					headers: {
-						Authorization: "Token XdaKz1bZXgGVgX6MQzO0qAXa1X7Vp8uJ",
+						Authorization: `Token ${process.env.BASEROW_TOKEN}`,
 						"Content-Type": "application/json",
 					},
 				});

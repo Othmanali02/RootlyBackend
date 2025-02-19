@@ -8,11 +8,11 @@ const teamRouter = express.Router();
 
 async function getUserByID(ownerId) {
 	try {
-		const bRowURL = `https://portal.ardbase.org/api/database/rows/table/675/${ownerId}/?user_field_names=true`;
+		const bRowURL = `https://data.ardbase.org/api/database/rows/table/2158/${ownerId}/?user_field_names=true`;
 
 		const response = await axios.get(bRowURL, {
 			headers: {
-				Authorization: "Token XdaKz1bZXgGVgX6MQzO0qAXa1X7Vp8uJ",
+				Authorization: `Token ${process.env.BASEROW_TOKEN}`,
 				"Content-Type": "application/json",
 			},
 		});
@@ -44,14 +44,14 @@ teamRouter.patch(
 
 			console.log(currTeamMembers);
 
-			const bRowURL = `https://portal.ardbase.org/api/database/rows/table/678/${teamID}/?user_field_names=true`;
+			const bRowURL = `https://data.ardbase.org/api/database/rows/table/2160/${teamID}/?user_field_names=true`;
 
 			const response = await axios.patch(
 				bRowURL,
 				{ "User ID": currTeamMembers },
 				{
 					headers: {
-						Authorization: "Token XdaKz1bZXgGVgX6MQzO0qAXa1X7Vp8uJ",
+						Authorization: `Token ${process.env.BASEROW_TOKEN}`,
 						"Content-Type": "application/json",
 					},
 				}
@@ -82,11 +82,11 @@ teamRouter.patch(
 			}
 
 			const usersURL =
-				"https://portal.ardbase.org/api/database/rows/table/675/?user_field_names=true";
+				"https://data.ardbase.org/api/database/rows/table/2158/?user_field_names=true";
 
 			const response1 = await axios.get(usersURL, {
 				headers: {
-					Authorization: "Token XdaKz1bZXgGVgX6MQzO0qAXa1X7Vp8uJ",
+					Authorization: `Token ${process.env.BASEROW_TOKEN}`,
 					"Content-Type": "application/json",
 				},
 			});
@@ -97,14 +97,14 @@ teamRouter.patch(
 
 			currTeamMembers.push(matchedUser[0]["User ID"]);
 
-			const bRowURL = `https://portal.ardbase.org/api/database/rows/table/678/${teamID}/?user_field_names=true`;
+			const bRowURL = `https://data.ardbase.org/api/database/rows/table/2160/${teamID}/?user_field_names=true`;
 
 			const response = await axios.patch(
 				bRowURL,
 				{ "User ID": currTeamMembers },
 				{
 					headers: {
-						Authorization: "Token XdaKz1bZXgGVgX6MQzO0qAXa1X7Vp8uJ",
+						Authorization: `Token ${process.env.BASEROW_TOKEN}`,
 						"Content-Type": "application/json",
 					},
 				}
@@ -128,11 +128,11 @@ teamRouter.post(
 		try {
 			console.log(req.body.userId);
 
-			const bRowURL = `https://portal.ardbase.org/api/database/rows/table/678/?user_field_names=true`;
+			const bRowURL = `https://data.ardbase.org/api/database/rows/table/2160/?user_field_names=true`;
 
 			const response = await axios.get(bRowURL, {
 				headers: {
-					Authorization: "Token XdaKz1bZXgGVgX6MQzO0qAXa1X7Vp8uJ",
+					Authorization: `Token ${process.env.BASEROW_TOKEN}`,
 					"Content-Type": "application/json",
 				},
 			});
@@ -172,11 +172,11 @@ teamRouter.post(
 	expressAsyncHandler(async (req, res) => {
 		try {
 			const bRowURL =
-				"https://portal.ardbase.org/api/database/rows/table/678/?user_field_names=true";
+				"https://data.ardbase.org/api/database/rows/table/2160/?user_field_names=true";
 
 			const response = await axios.get(bRowURL, {
 				headers: {
-					Authorization: "Token XdaKz1bZXgGVgX6MQzO0qAXa1X7Vp8uJ",
+					Authorization: `Token ${process.env.BASEROW_TOKEN}`,
 					"Content-Type": "application/json",
 				},
 			});
@@ -190,11 +190,11 @@ teamRouter.post(
 			const teamInfo = matchedTeam[0];
 
 			const bRowURL2 =
-				"https://portal.ardbase.org/api/database/rows/table/676/?user_field_names=true&size=200";
+				"https://data.ardbase.org/api/database/rows/table/2159/?user_field_names=true";
 
 			const response1 = await axios.get(bRowURL2, {
 				headers: {
-					Authorization: "Token XdaKz1bZXgGVgX6MQzO0qAXa1X7Vp8uJ",
+					Authorization: `Token ${process.env.BASEROW_TOKEN}`,
 					"Content-Type": "application/json",
 				},
 			});
@@ -261,11 +261,11 @@ teamRouter.post(
 			// };
 
 			const usersURL =
-				"https://portal.ardbase.org/api/database/rows/table/675/?user_field_names=true";
+				"https://data.ardbase.org/api/database/rows/table/2158/?user_field_names=true";
 
 			const response1 = await axios.get(usersURL, {
 				headers: {
-					Authorization: "Token XdaKz1bZXgGVgX6MQzO0qAXa1X7Vp8uJ",
+					Authorization: `Token ${process.env.BASEROW_TOKEN}`,
 					"Content-Type": "application/json",
 				},
 			});
@@ -296,11 +296,11 @@ teamRouter.post(
 			console.log(req_data);
 
 			const teamsURL =
-				"https://portal.ardbase.org/api/database/rows/table/678/?user_field_names=true";
+				"https://data.ardbase.org/api/database/rows/table/2160/?user_field_names=true";
 
 			const response = await axios.post(teamsURL, req_data, {
 				headers: {
-					Authorization: "Token XdaKz1bZXgGVgX6MQzO0qAXa1X7Vp8uJ",
+					Authorization: `Token ${process.env.BASEROW_TOKEN}`,
 					"Content-Type": "application/json",
 				},
 			});
@@ -325,11 +325,11 @@ teamRouter.get("/status/:teamId", async (req, res) => {
 		let isMember = false;
 		let isOwner = false;
 
-		const bRowURL1 = `https://portal.ardbase.org/api/database/rows/table/678/?user_field_names=true`;
+		const bRowURL1 = `https://data.ardbase.org/api/database/rows/table/2160/?user_field_names=true`;
 
 		const response1 = await axios.get(bRowURL1, {
 			headers: {
-				Authorization: "Token XdaKz1bZXgGVgX6MQzO0qAXa1X7Vp8uJ",
+				Authorization: `Token ${process.env.BASEROW_TOKEN}`,
 				"Content-Type": "application/json",
 			},
 		});

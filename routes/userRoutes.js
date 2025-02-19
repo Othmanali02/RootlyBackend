@@ -129,11 +129,11 @@ userRouter.get("/status/:listId", async (req, res) => {
 		let isOwner = false;
 
 		// checks if the user id exists in the list
-		const bRowURL = `https://portal.ardbase.org/api/database/rows/table/676/?user_field_names=true`;
+		const bRowURL = `https://data.ardbase.org/api/database/rows/table/2159/?user_field_names=true`;
 
 		const response = await axios.get(bRowURL, {
 			headers: {
-				Authorization: "Token XdaKz1bZXgGVgX6MQzO0qAXa1X7Vp8uJ",
+				Authorization: `Token ${process.env.BASEROW_TOKEN}`,
 				"Content-Type": "application/json",
 			},
 		});
@@ -147,11 +147,11 @@ userRouter.get("/status/:listId", async (req, res) => {
 		if (listOwner[0]) isOwner = true;
 
 		// checks if the user exists in a team that has that list in it
-		const bRowURL1 = `https://portal.ardbase.org/api/database/rows/table/678/?user_field_names=true`;
+		const bRowURL1 = `https://data.ardbase.org/api/database/rows/table/2160/?user_field_names=true`;
 
 		const response1 = await axios.get(bRowURL1, {
 			headers: {
-				Authorization: "Token XdaKz1bZXgGVgX6MQzO0qAXa1X7Vp8uJ",
+				Authorization: `Token ${process.env.BASEROW_TOKEN}`,
 				"Content-Type": "application/json",
 			},
 		});

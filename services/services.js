@@ -4,11 +4,11 @@ const axios = require("axios");
 async function pushCredentialsToBaserow(name, email) {
 	try {
 		const getusers =
-			"https://portal.ardbase.org/api/database/rows/table/675/?user_field_names=true";
+			"https://data.ardbase.org/api/database/rows/table/2158/?user_field_names=true";
 
 		const response = await axios.get(getusers, {
 			headers: {
-				Authorization: "Token XdaKz1bZXgGVgX6MQzO0qAXa1X7Vp8uJ",
+				Authorization: `Token ${process.env.BASEROW_TOKEN}`,
 				"Content-Type": "application/json",
 			},
 		});
@@ -32,11 +32,11 @@ async function pushCredentialsToBaserow(name, email) {
 			console.log(req_data);
 
 			const usersUrl =
-				"https://portal.ardbase.org/api/database/rows/table/675/?user_field_names=true";
+				"https://data.ardbase.org/api/database/rows/table/2158/?user_field_names=true";
 
 			const response1 = await axios.post(usersUrl, req_data, {
 				headers: {
-					Authorization: "Token XdaKz1bZXgGVgX6MQzO0qAXa1X7Vp8uJ",
+					Authorization: `Token ${process.env.BASEROW_TOKEN}`,
 					"Content-Type": "application/json",
 				},
 			});
