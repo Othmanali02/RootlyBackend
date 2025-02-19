@@ -107,32 +107,6 @@ function createTsvFile(listData, listName) {
 	return tsvContent;
 }
 
-function createCsvFile(listData, listName) {
-	const tsvData = listData.map(mapTsvData);
-
-	const headers = [
-		"Name",
-		"Short Name",
-		"Description",
-		"Data Type",
-		"Unit Name",
-		"Unit Abbreviation",
-		"Unit Descriptions",
-		"Trait categories (comma separated)",
-		"Min (only for numeric traits)",
-		"Max (only for numeric traits)",
-	];
-
-	const tsvContent = [
-		headers.join("\t"), // Join headers with tab
-		...tsvData.map((item) => Object.values(item).join("\t")), // Join each row's values with tab
-	].join("\n");
-
-	const filePath = path.join(__dirname, `${listName}-FieldBook.tsv`);
-
-	return tsvContent;
-}
-
 function createJsonFile(listData, listName) {
 	const jsonData = listData.map(mapJsonData);
 
