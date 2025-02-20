@@ -233,6 +233,75 @@ listRouter.post(
 	})
 );
 
+listRouter.get(
+	"/userCustomVariables",
+	expressAsyncHandler(async (req, res) => {
+		try {
+			console.log("Custom variables for this user !!", req.cookies.UUID);
+
+			const bRowURL =
+				"https://data.ardbase.org/api/database/rows/table/2159/?user_field_names=true";
+
+			const response = await axios.get(bRowURL, {
+				headers: {
+					Authorization: `Token ${process.env.BASEROW_TOKEN}`,
+					"Content-Type": "application/json",
+				},
+			});
+
+			const userLists = response.data.results.filter(
+				(item) => item.Owner[0].value === req.cookies.UUID
+			);
+
+			const allListContents = userLists
+				.map((item) => item["List-Content"])
+				.flat();
+
+			const bRowURL1 =
+				"https://data.ardbase.org/api/database/rows/table/2161/?user_field_names=true&size=200";
+
+			const response1 = await axios.get(bRowURL1, {
+				headers: {
+					Authorization: `Token ${process.env.BASEROW_TOKEN}`,
+					"Content-Type": "application/json",
+				},
+			});
+
+			const dbListContents = response1.data.results;
+			const customVariablesArray = [
+				...new Set(
+					allListContents
+						.filter((content) =>
+							dbListContents.some(
+								(dbContent) =>
+									dbContent.id === content.id &&
+									dbContent["List Content ID"] === content.value
+							)
+						)
+						.map((content) => {
+							const matchedDbContent = dbListContents.find(
+								(dbContent) =>
+									dbContent.id === content.id &&
+									dbContent["List Content ID"] === content.value
+							);
+							return matchedDbContent
+								? matchedDbContent["Custom Variables"]
+								: null;
+						})
+						.filter((customVariable) => customVariable && customVariable !== "")
+				),
+			];
+
+			res.status(200).json({
+				message: "Custom Variables",
+				customVariables: customVariablesArray,
+			});
+		} catch (error) {
+			console.log(error);
+		}
+	})
+);
+
 listRouter.post(
 	"/getUserLists",
 	expressAsyncHandler(async (req, res) => {
@@ -317,12 +386,18 @@ listRouter.post(
 			);
 
 			let variableDbIds = [];
+			let customVariables = [];
 			let baserowIds = {};
 
 			// Build a map of Variable Db Ids to baserowId
 			for (let i = 0; i < matchedItems.length; i++) {
 				const variableDbId = matchedItems[i]["Variable Db Id"];
 				const baserowID = matchedItems[i].id;
+				if (matchedItems[i]["Custom Variables"])
+					customVariables.push({
+						cropOntologyData: matchedItems[i]["Custom Variables"],
+						baserowID: matchedItems[i].id,
+					});
 				variableDbIds.push(variableDbId);
 				baserowIds[variableDbId] = baserowID; // Map each variableDbId to its corresponding baserowID
 			}
@@ -353,6 +428,7 @@ listRouter.post(
 				listName: listName,
 				items: finalRes,
 				listBrowID: listBrowID,
+				customVariables: customVariables,
 			};
 
 			res.status(response.status).json(resBody);
@@ -432,12 +508,10 @@ listRouter.post(
 			);
 
 			console.log(response1.data);
-			res
-				.status(200)
-				.json({
-					message: "Variables Added",
-					updatedList: response.data.result,
-				});
+			res.status(200).json({
+				message: "Variables Added",
+				updatedList: response.data.result,
+			});
 		} catch (error) {
 			console.error("Error making the POST request:", error);
 			res
@@ -506,6 +580,146 @@ listRouter.post(
 
 			console.log(response1.data);
 			res.status(200).json({ message: "Variables Added" });
+		} catch (error) {
+			console.error("Error making the POST request:", error);
+			res
+				.status(500)
+				.json({ message: "Internal Server Error", error: error.message });
+		}
+	})
+);
+
+listRouter.post(
+	"/addCustomVariable",
+	expressAsyncHandler(async (req, res) => {
+		try {
+			let listId = req.body.listId;
+			let listBrowID = req.body.listBrowID;
+			let userInput = req.body.userInput;
+
+			const secondUrl =
+				"https://data.ardbase.org/api/database/rows/table/2161/?user_field_names=true";
+
+			const listContentData = {
+				"List Content ID": await generateID(),
+				"List ID": [listId],
+				"List Name": req.body.listName,
+				"Custom Variables": JSON.stringify(userInput),
+			};
+
+			const listContentResponse = await axios.post(secondUrl, listContentData, {
+				headers: {
+					Authorization: `Token ${process.env.BASEROW_TOKEN}`,
+					"Content-Type": "application/json",
+				},
+			});
+
+			const getRow = `https://data.ardbase.org/api/database/rows/table/2159/${listBrowID}/?user_field_names=true`;
+
+			const response = await axios.get(getRow, {
+				headers: {
+					Authorization: `Token ${process.env.BASEROW_TOKEN}`,
+					"Content-Type": "application/json",
+				},
+			});
+
+			let newLength = Number(response.data.Length) + 1;
+
+			const patchRow = `https://data.ardbase.org/api/database/rows/table/2159/${listBrowID}/?user_field_names=true`;
+
+			const response1 = await axios.patch(
+				patchRow,
+				{
+					Length: newLength + "",
+				},
+				{
+					headers: {
+						Authorization: `Token ${process.env.BASEROW_TOKEN}`,
+						"Content-Type": "application/json",
+					},
+				}
+			);
+
+			res.status(200).json({
+				message: "Variables Added",
+				baserowID: listContentResponse.data.id,
+			});
+		} catch (error) {
+			console.error("Error making the POST request:", error);
+			res
+				.status(500)
+				.json({ message: "Internal Server Error", error: error.message });
+		}
+	})
+);
+
+listRouter.post(
+	"/addMultipleCustomVariables",
+	expressAsyncHandler(async (req, res) => {
+		try {
+			let listId = req.body.listId;
+			let listBrowID = req.body.listBrowID;
+			let chosenVariables = req.body.chosenVariables;
+			let variablesAdded = [];
+
+			for (let i = 0; i < chosenVariables.length; i++) {
+				const secondUrl =
+					"https://data.ardbase.org/api/database/rows/table/2161/?user_field_names=true";
+
+				const listContentData = {
+					"List Content ID": await generateID(),
+					"List ID": [listId],
+					"List Name": req.body.listName,
+					"Custom Variables": JSON.stringify(chosenVariables[i]),
+				};
+
+				const listContentResponse = await axios.post(
+					secondUrl,
+					listContentData,
+					{
+						headers: {
+							Authorization: `Token ${process.env.BASEROW_TOKEN}`,
+							"Content-Type": "application/json",
+						},
+					}
+				);
+
+				variablesAdded.push({
+					baserowID: listContentResponse.data.id,
+					listContentData: chosenVariables[i],
+				});
+			}
+
+			const getRow = `https://data.ardbase.org/api/database/rows/table/2159/${listBrowID}/?user_field_names=true`;
+
+			const response = await axios.get(getRow, {
+				headers: {
+					Authorization: `Token ${process.env.BASEROW_TOKEN}`,
+					"Content-Type": "application/json",
+				},
+			});
+
+			let newLength = Number(response.data.Length) + chosenVariables.length;
+
+			const patchRow = `https://data.ardbase.org/api/database/rows/table/2159/${listBrowID}/?user_field_names=true`;
+
+			const response1 = await axios.patch(
+				patchRow,
+				{
+					Length: newLength + "",
+				},
+				{
+					headers: {
+						Authorization: `Token ${process.env.BASEROW_TOKEN}`,
+						"Content-Type": "application/json",
+					},
+				}
+			);
+
+			res.status(200).json({
+				message: "Variables Added",
+				variables: variablesAdded,
+			});
 		} catch (error) {
 			console.error("Error making the POST request:", error);
 			res
