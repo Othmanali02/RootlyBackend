@@ -137,10 +137,6 @@ userRouter.get("/status/:listId", async (req, res) => {
 				"Content-Type": "application/json",
 			},
 		});
-		console.log(response.data.results[11].id + "");
-
-		console.log(response.data.results[11].Owner[0].value + "");
-		console.log(UUID);
 
 		const listOwner = response.data.results.filter(
 			(item) =>
@@ -162,7 +158,7 @@ userRouter.get("/status/:listId", async (req, res) => {
 
 		for (let team of response1.data.results) {
 			const listMatch = team.Lists.some(
-				(list) => list.value === req.params.listId
+				(list) => list.id + "" === req.params.listId
 			);
 
 			const userMatch = team["User ID"].some((user) => user.value === UUID);

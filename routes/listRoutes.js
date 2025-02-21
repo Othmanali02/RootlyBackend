@@ -598,17 +598,20 @@ listRouter.post(
 
 			const listContentData = {
 				"List Content ID": await generateID(),
-				"List ID": [listId],
+				"List ID": [Number(listId)],
 				"List Name": req.body.listName,
 				"Custom Variables": JSON.stringify(userInput),
 			};
 
+			console.log(listContentData);
 			const listContentResponse = await axios.post(secondUrl, listContentData, {
 				headers: {
 					Authorization: `Token ${process.env.BASEROW_TOKEN}`,
 					"Content-Type": "application/json",
 				},
 			});
+
+			console.log(listContentResponse.data)
 
 			const getRow = `https://data.ardbase.org/api/database/rows/table/2159/${listBrowID}/?user_field_names=true`;
 
@@ -664,7 +667,7 @@ listRouter.post(
 
 				const listContentData = {
 					"List Content ID": await generateID(),
-					"List ID": [listId],
+					"List ID": [Number(listId)],
 					"List Name": req.body.listName,
 					"Custom Variables": JSON.stringify(chosenVariables[i]),
 				};
