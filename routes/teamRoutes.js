@@ -81,17 +81,28 @@ teamRouter.patch(
 				currTeamMembers.push(teamMembers[i].value);
 			}
 
-			const usersURL =
-				"https://data.ardbase.org/api/database/rows/table/2158/?user_field_names=true";
+			let allUsers = [];
 
-			const response1 = await axios.get(usersURL, {
-				headers: {
-					Authorization: `Token ${process.env.BASEROW_TOKEN}`,
-					"Content-Type": "application/json",
-				},
-			});
+			let nextPageUrl =
+				"https://data.ardbase.org/api/database/rows/table/2158/?user_field_names=true&size=200";
 
-			const matchedUser = response1.data.results.filter(
+			while (nextPageUrl) {
+				try {
+					const response1 = await axios.get(nextPageUrl, {
+						headers: {
+							Authorization: `Token ${process.env.BASEROW_TOKEN}`,
+							"Content-Type": "application/json",
+						},
+					});
+					allUsers = allUsers.concat(response1.data.results);
+					nextPageUrl = response1.data.next;
+				} catch (error) {
+					console.error("Error fetching data:", error);
+					break;
+				}
+			}
+
+			const matchedUser = allUsers.filter(
 				(item) => item["Email"] === memberEmail
 			);
 
@@ -127,17 +138,28 @@ teamRouter.post(
 	expressAsyncHandler(async (req, res) => {
 		try {
 			console.log(req.body.userId);
+			let allTeams = [];
 
-			const bRowURL = `https://data.ardbase.org/api/database/rows/table/2160/?user_field_names=true`;
+			let nextPageUrl =
+				"https://data.ardbase.org/api/database/rows/table/2160/?user_field_names=true&size=200";
 
-			const response = await axios.get(bRowURL, {
-				headers: {
-					Authorization: `Token ${process.env.BASEROW_TOKEN}`,
-					"Content-Type": "application/json",
-				},
-			});
+			while (nextPageUrl) {
+				try {
+					const response1 = await axios.get(nextPageUrl, {
+						headers: {
+							Authorization: `Token ${process.env.BASEROW_TOKEN}`,
+							"Content-Type": "application/json",
+						},
+					});
+					allTeams = allTeams.concat(response1.data.results);
+					nextPageUrl = response1.data.next;
+				} catch (error) {
+					console.error("Error fetching data:", error);
+					break;
+				}
+			}
 
-			let teamArr = response.data.results;
+			let teamArr = allTeams;
 			let teamList = [];
 			let sharedTeams = [];
 
@@ -182,17 +204,28 @@ teamRouter.post(
 
 			const teamInfo = response.data;
 
-			const bRowURL2 =
-				"https://data.ardbase.org/api/database/rows/table/2159/?user_field_names=true";
+			let allLists = [];
 
-			const response1 = await axios.get(bRowURL2, {
-				headers: {
-					Authorization: `Token ${process.env.BASEROW_TOKEN}`,
-					"Content-Type": "application/json",
-				},
-			});
+			let nextPageUrl =
+				"https://data.ardbase.org/api/database/rows/table/2159/?user_field_names=true&size=200";
 
-			let listInformation = response1.data.results;
+			while (nextPageUrl) {
+				try {
+					const response1 = await axios.get(nextPageUrl, {
+						headers: {
+							Authorization: `Token ${process.env.BASEROW_TOKEN}`,
+							"Content-Type": "application/json",
+						},
+					});
+					allLists = allLists.concat(response1.data.results);
+					nextPageUrl = response1.data.next;
+				} catch (error) {
+					console.error("Error fetching data:", error);
+					break;
+				}
+			}
+
+			let listInformation = allLists;
 
 			let teamLists = teamInfo.Lists;
 			console.log(teamInfo);
@@ -232,7 +265,7 @@ teamRouter.post(
 				members: members,
 			};
 
-			res.status(response.status).json(resBody);
+			res.status(200).json(resBody);
 		} catch (error) {
 			console.error("Error making the POST request:", error);
 			res

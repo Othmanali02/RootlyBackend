@@ -129,7 +129,7 @@ userRouter.get("/status/:listId", async (req, res) => {
 		let isOwner = false;
 
 		// checks if the user id exists in the list
-		const bRowURL = `https://data.ardbase.org/api/database/rows/table/2159/?user_field_names=true`;
+		const bRowURL = `https://data.ardbase.org/api/database/rows/table/2159/${req.params.listId}/?user_field_names=true`;
 
 		const response = await axios.get(bRowURL, {
 			headers: {
@@ -138,33 +138,45 @@ userRouter.get("/status/:listId", async (req, res) => {
 			},
 		});
 
-		const listOwner = response.data.results.filter(
-			(item) =>
-				item.id + "" === req.params.listId && item.Owner[0].value === UUID
-		);
+		const list = response.data;
 
-		console.log(listOwner);
-		if (listOwner[0]) isOwner = true;
+		if (list.Owner[0].value === UUID) isOwner = true;
 
-		// checks if the user exists in a team that has that list in it
-		const bRowURL1 = `https://data.ardbase.org/api/database/rows/table/2160/?user_field_names=true`;
+		if (!isOwner) {
+			// checks if the user exists in a team that has that list in it
+			let allTeams = [];
 
-		const response1 = await axios.get(bRowURL1, {
-			headers: {
-				Authorization: `Token ${process.env.BASEROW_TOKEN}`,
-				"Content-Type": "application/json",
-			},
-		});
+			let nextPageUrl =
+				"https://data.ardbase.org/api/database/rows/table/2160/?user_field_names=true&size=200";
 
-		for (let team of response1.data.results) {
-			const listMatch = team.Lists.some(
-				(list) => list.id + "" === req.params.listId
-			);
+			while (nextPageUrl) {
+				try {
+					const response1 = await axios.get(nextPageUrl, {
+						headers: {
+							Authorization: `Token ${process.env.BASEROW_TOKEN}`,
+							"Content-Type": "application/json",
+						},
+					});
+					allTeams = allTeams.concat(response1.data.results);
+					nextPageUrl = response1.data.next;
+				} catch (error) {
+					console.error("Error fetching data:", error);
+					break;
+				}
+			}
 
-			const userMatch = team["User ID"].some((user) => user.value === UUID);
-			if (listMatch && userMatch) {
-				isMember = true;
-				break;
+			let teamArr = allTeams;
+
+			for (let team of teamArr) {
+				const listMatch = team.Lists.some(
+					(list) => list.id + "" === req.params.listId
+				);
+
+				const userMatch = team["User ID"].some((user) => user.value === UUID);
+				if (listMatch && userMatch) {
+					isMember = true;
+					break;
+				}
 			}
 		}
 

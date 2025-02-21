@@ -239,8 +239,10 @@ listRouter.get(
 		try {
 			console.log("Custom variables for this user !!", req.cookies.UUID);
 
+			// should be able to paginate if the number of rows is exceeded
+
 			const bRowURL =
-				"https://data.ardbase.org/api/database/rows/table/2159/?user_field_names=true";
+				"https://data.ardbase.org/api/database/rows/table/2159/?user_field_names=true&size=200";
 
 			const response = await axios.get(bRowURL, {
 				headers: {
@@ -307,18 +309,29 @@ listRouter.post(
 	expressAsyncHandler(async (req, res) => {
 		try {
 			let email = req.body.email;
+			let allUsers = [];
+			
+			let nextPageUrl =
+				"https://data.ardbase.org/api/database/rows/table/2158/?user_field_names=true&size=200";
 
-			const bRowURL =
-				"https://data.ardbase.org/api/database/rows/table/2158/?user_field_names=true";
+			while (nextPageUrl) {
+				try {
+					const response1 = await axios.get(nextPageUrl, {
+						headers: {
+							Authorization: `Token ${process.env.BASEROW_TOKEN}`,
+							"Content-Type": "application/json",
+						},
+					});
+					allUsers = allUsers.concat(response1.data.results);
+					nextPageUrl = response1.data.next;
+				} catch (error) {
+					console.error("Error fetching data:", error);
+					break;
+				}
+			}
 
-			const response = await axios.get(bRowURL, {
-				headers: {
-					Authorization: `Token ${process.env.BASEROW_TOKEN}`,
-					"Content-Type": "application/json",
-				},
-			});
-
-			const userObj = response.data.results.find(
+			console.log(allUsers);
+			const userObj = allUsers.find(
 				(item) => item.Email === email
 			);
 
@@ -337,7 +350,7 @@ listRouter.post(
 				listInformation.push(response.data);
 			}
 
-			res.status(response.status).json(listInformation);
+			res.status(200).json(listInformation);
 		} catch (error) {
 			console.log(error);
 		}
@@ -364,17 +377,27 @@ listRouter.post(
 			console.log(listName);
 			console.log(listBrowID);
 
-			const bRowURL2 =
+			let listContent = [];
+
+			let nextPageUrl =
 				"https://data.ardbase.org/api/database/rows/table/2161/?user_field_names=true&size=200";
 
-			const response1 = await axios.get(bRowURL2, {
-				headers: {
-					Authorization: `Token ${process.env.BASEROW_TOKEN}`,
-					"Content-Type": "application/json",
-				},
-			});
+			while (nextPageUrl) {
+				try {
+					const response1 = await axios.get(nextPageUrl, {
+						headers: {
+							Authorization: `Token ${process.env.BASEROW_TOKEN}`,
+							"Content-Type": "application/json",
+						},
+					});
+					listContent = listContent.concat(response1.data.results);
+					nextPageUrl = response1.data.next;
+				} catch (error) {
+					console.error("Error fetching data:", error);
+					break;
+				}
+			}
 
-			let listContent = response1.data.results;
 			console.log(listContent[0]["List ID"]);
 
 			const matchedItems = listContent.filter((item) =>
@@ -611,7 +634,7 @@ listRouter.post(
 				},
 			});
 
-			console.log(listContentResponse.data)
+			console.log(listContentResponse.data);
 
 			const getRow = `https://data.ardbase.org/api/database/rows/table/2159/${listBrowID}/?user_field_names=true`;
 
