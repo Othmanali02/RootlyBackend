@@ -137,13 +137,17 @@ userRouter.get("/status/:listId", async (req, res) => {
 				"Content-Type": "application/json",
 			},
 		});
+		console.log(response.data.results[11].id + "");
+
+		console.log(response.data.results[11].Owner[0].value + "");
+		console.log(UUID);
 
 		const listOwner = response.data.results.filter(
 			(item) =>
-				item["List ID"] === req.params.listId && item.Owner[0].value === UUID
+				item.id + "" === req.params.listId && item.Owner[0].value === UUID
 		);
 
-		console.log(listOwner[0]);
+		console.log(listOwner);
 		if (listOwner[0]) isOwner = true;
 
 		// checks if the user exists in a team that has that list in it
@@ -188,7 +192,5 @@ userRouter.get("/status/:listId", async (req, res) => {
 		console.log(err);
 	}
 });
-
-
 
 module.exports = userRouter;

@@ -348,8 +348,7 @@ listRouter.post(
 	"/getListInfo",
 	expressAsyncHandler(async (req, res) => {
 		try {
-			const bRowURL =
-				"https://data.ardbase.org/api/database/rows/table/2159/?user_field_names=true";
+			const bRowURL = `https://data.ardbase.org/api/database/rows/table/2159/${req.body.listId}/?user_field_names=true`;
 
 			const response = await axios.get(bRowURL, {
 				headers: {
@@ -358,16 +357,12 @@ listRouter.post(
 				},
 			});
 
-			let items = response.data.results;
-
-			const matchedList = items.filter(
-				(item) => item["List ID"] === req.body.listId
-			);
-
-			let listName = matchedList[0].Name;
-			let listBrowID = matchedList[0].id;
-
-			// let owner = items.Owner[0].value; // compute the id of the user with another bRow request
+			const matchedList = response.data;
+			console.log(matchedList);
+			let listName = matchedList.Name;
+			let listBrowID = matchedList.id;
+			console.log(listName);
+			console.log(listBrowID);
 
 			const bRowURL2 =
 				"https://data.ardbase.org/api/database/rows/table/2161/?user_field_names=true&size=200";
@@ -380,11 +375,12 @@ listRouter.post(
 			});
 
 			let listContent = response1.data.results;
+			console.log(listContent[0]["List ID"]);
 
 			const matchedItems = listContent.filter((item) =>
-				item["List ID"].some((list) => list.value === req.body.listId)
+				item["List ID"].some((list) => list.id + "" === req.body.listId)
 			);
-
+			console.log(matchedItems);
 			let variableDbIds = [];
 			let customVariables = [];
 			let baserowIds = {};

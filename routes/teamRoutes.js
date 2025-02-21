@@ -171,8 +171,7 @@ teamRouter.post(
 	"/getTeamInfo",
 	expressAsyncHandler(async (req, res) => {
 		try {
-			const bRowURL =
-				"https://data.ardbase.org/api/database/rows/table/2160/?user_field_names=true";
+			const bRowURL = `https://data.ardbase.org/api/database/rows/table/2160/${req.body.teamId}/?user_field_names=true`;
 
 			const response = await axios.get(bRowURL, {
 				headers: {
@@ -181,13 +180,7 @@ teamRouter.post(
 				},
 			});
 
-			let items = response.data.results;
-
-			const matchedTeam = items.filter(
-				(item) => item["Team ID"] === req.body.teamId
-			);
-
-			const teamInfo = matchedTeam[0];
+			const teamInfo = response.data;
 
 			const bRowURL2 =
 				"https://data.ardbase.org/api/database/rows/table/2159/?user_field_names=true";
@@ -201,7 +194,8 @@ teamRouter.post(
 
 			let listInformation = response1.data.results;
 
-			let teamLists = matchedTeam[0].Lists;
+			let teamLists = teamInfo.Lists;
+			console.log(teamInfo);
 			let matchinglists = [];
 
 			for (let teamList of teamLists) {
@@ -215,25 +209,26 @@ teamRouter.post(
 					matchinglists.push({
 						listName: matchingList.Name,
 						listId: matchingList["List ID"],
+						listBaserowId: matchingList.id,
 						owner: user.Email,
 						length: matchingList["Length"],
 					});
 				}
 			}
 
-			// console.log(matchedTeam[0].Leader);
-			// console.log(matchedTeam[0]["User ID"]);
+			// console.log(teamInfo.Leader);
+			// console.log(teamInfo["User ID"]);
 
 			let members = [];
 
-			for (let i = 0; i < matchedTeam[0]["User ID"].length; i++) {
-				members.push(await getUserByID(matchedTeam[0]["User ID"][i].id));
+			for (let i = 0; i < teamInfo["User ID"].length; i++) {
+				members.push(await getUserByID(teamInfo["User ID"][i].id));
 			}
 			console.log(members);
 			let resBody = {
 				teamInfo: teamInfo,
 				lists: matchinglists,
-				owner: await getUserByID(matchedTeam[0].Leader[0].id),
+				owner: await getUserByID(teamInfo.Leader[0].id),
 				members: members,
 			};
 
@@ -325,7 +320,7 @@ teamRouter.get("/status/:teamId", async (req, res) => {
 		let isMember = false;
 		let isOwner = false;
 
-		const bRowURL1 = `https://data.ardbase.org/api/database/rows/table/2160/?user_field_names=true`;
+		const bRowURL1 = `https://data.ardbase.org/api/database/rows/table/2160/${req.params.teamId}/?user_field_names=true`;
 
 		const response1 = await axios.get(bRowURL1, {
 			headers: {
@@ -333,34 +328,27 @@ teamRouter.get("/status/:teamId", async (req, res) => {
 				"Content-Type": "application/json",
 			},
 		});
+		let team = response1.data;
 
-		for (let team of response1.data.results) {
-			const teamMatch = team["Team ID"] === teamId;
+		const teamMatch = team.id + "" === teamId;
 
-			const ownerMatch = team["Leader"][0].value === UUID;
-			console.log(ownerMatch);
+		const ownerMatch = team["Leader"][0].value === UUID;
+		console.log(ownerMatch);
 
-			const userMatch = team["User ID"].some((user) => user.value === UUID);
+		const userMatch = team["User ID"].some((user) => user.value === UUID);
 
-			console.log(team.Name);
-			console.log("********************************");
-			console.log(ownerMatch);
-			console.log(userMatch);
-			console.log(teamMatch);
+		console.log(team.Name);
+		console.log(ownerMatch);
+		console.log(userMatch);
+		console.log(teamMatch);
 
-			if (teamMatch && userMatch) {
-				isMember = true;
-				isOwner = false;
-				break;
-			} else if (teamMatch && ownerMatch) {
-				isOwner = true;
-				isMember = false;
-				break;
-			}
+		if (teamMatch && userMatch) {
+			isMember = true;
+			isOwner = false;
+		} else if (teamMatch && ownerMatch) {
+			isOwner = true;
+			isMember = false;
 		}
-
-		console.log(isOwner);
-		console.log(isMember);
 
 		if (isOwner && !isMember) {
 			res.json({
