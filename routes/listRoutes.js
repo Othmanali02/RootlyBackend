@@ -293,6 +293,7 @@ listRouter.get(
 						.filter((customVariable) => customVariable && customVariable !== "")
 				),
 			];
+			console.log(customVariablesArray);
 
 			res.status(200).json({
 				message: "Custom Variables",
