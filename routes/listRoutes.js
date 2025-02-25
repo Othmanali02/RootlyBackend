@@ -19,7 +19,19 @@ const {
 	getUserCustomVariables,
 } = require("./baserow/listMethods.js");
 
+const {
+	getUserListsA,
+	getListInfoA,
+	addVariableA,
+	removeVariableA,
+	addCustomVariableA,
+	addMultipleCustomVariablesA,
+	createListA,
+	getUserCustomVariablesA,
+} = require("./airtable/listMethods.js");
+
 const listRouter = express.Router();
+const airtable = true;
 
 function mapFormat(dataType) {
 	const typeMap = {
@@ -247,7 +259,10 @@ listRouter.get(
 	"/userCustomVariables",
 	expressAsyncHandler(async (req, res) => {
 		try {
-			const customVariablesArray = await getUserCustomVariables(req);
+			let customVariablesArray = null;
+
+			if (airtable) customVariablesArray = await getUserCustomVariablesA(req);
+			else customVariablesArray = await getUserCustomVariables(req);
 
 			res.status(200).json({
 				message: "Custom Variables",
@@ -263,8 +278,11 @@ listRouter.post(
 	"/getUserLists",
 	expressAsyncHandler(async (req, res) => {
 		try {
-			// for baserow
-			const userLists = await getUserLists(req);
+			let userLists = null;
+			// for airtable
+			if (airtable) userLists = await getUserListsA(req);
+			else userLists = await getUserLists(req); // for baserow
+
 			console.log(userLists);
 			res.status(200).json(userLists);
 		} catch (error) {
@@ -278,7 +296,12 @@ listRouter.post(
 	expressAsyncHandler(async (req, res) => {
 		try {
 			// for baserow
-			const resBody = await getListInfo(req);
+			let resBody = null;
+			if (airtable) {
+				resBody = await getListInfoA(req);
+			} else {
+				resBody = await getListInfo(req);
+			}
 
 			res.status(200).json(resBody);
 		} catch (error) {
@@ -295,7 +318,10 @@ listRouter.post(
 	expressAsyncHandler(async (req, res) => {
 		try {
 			// for baserow
-			const updatedList = await removeVariable(req);
+			let updatedList = null;
+
+			if (airtable) updatedList = await removeVariableA(req);
+			else updatedList = await removeVariable(req);
 			res.status(200).json({
 				message: "Variable Removed",
 				updatedList: updatedList,
@@ -313,7 +339,8 @@ listRouter.post(
 	"/addVariable",
 	expressAsyncHandler(async (req, res) => {
 		try {
-			const response = await addVariable(req);
+			if (airtable) await addVariableA(req);
+			else await addVariable(req);
 			res.status(200).json({ message: "Variables Added" });
 		} catch (error) {
 			console.error("Error making the POST request:", error);
@@ -329,7 +356,10 @@ listRouter.post(
 	expressAsyncHandler(async (req, res) => {
 		try {
 			// for baserow
-			const bRowID = await addCustomVariable(req);
+			let bRowID = null;
+
+			if (airtable) bRowID = await addCustomVariableA(req);
+			else bRowID = await addCustomVariable(req);
 			res.status(200).json({
 				message: "Variables Added",
 				baserowID: bRowID,
@@ -347,7 +377,9 @@ listRouter.post(
 	"/addMultipleCustomVariables",
 	expressAsyncHandler(async (req, res) => {
 		try {
-			const variablesAdded = await addMultipleCustomVariables(req);
+			let variablesAdded = null;
+			if (airtable) variablesAdded = await addMultipleCustomVariablesA(req);
+			else variablesAdded = await addMultipleCustomVariables(req);
 
 			res.status(200).json({
 				message: "Variables Added",
@@ -366,8 +398,10 @@ listRouter.post(
 	"/createList",
 	expressAsyncHandler(async (req, res) => {
 		try {
-			const response = await createList(req);
-
+			let response = null;
+			if (airtable) response = await createListA(req);
+			else response = await createList(req);
+			console.log(response);
 			res.status(200).json(response);
 		} catch (error) {
 			console.error("Error making the POST request:", error);

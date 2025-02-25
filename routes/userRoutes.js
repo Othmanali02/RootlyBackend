@@ -4,12 +4,20 @@ const fs = require("fs");
 require("dotenv").config();
 const authUtils = require("../auth-util.js");
 const axios = require("axios");
-const pushCredentialsToBaserow = require("../services/services.js");
-const { getUserStatus } = require("./baserow/userMethods.js");
+const {
+	getUserStatus,
+	pushCredentialsToBaserow,
+} = require("./baserow/userMethods.js");
+const {
+	getUserStatusA,
+	pushCredentialsToAirtable,
+} = require("./airtable/userMethods.js");
 const cookieParser = require("cookie-parser");
 
 const discoveryUri = process.env.DISCOVERY_URI;
 const redirectUri = process.env.OAUTH_REDIRECT_URI;
+
+const airtable = true;
 
 var OAuthClient;
 authUtils.buildAuthClient(
@@ -51,7 +59,11 @@ userRouter.get(
 				if (token) {
 					const { email, preferred_username, name } = token.claims();
 
-					let newUserID = await pushCredentialsToBaserow(name, email);
+					let newUserID = null;
+
+					if (airtable)
+						newUserID = await pushCredentialsToAirtable(name, email);
+					else newUserID = await pushCredentialsToBaserow(name, email);
 					console.log(newUserID);
 
 					let jwtToken = token.id_token;
@@ -126,9 +138,19 @@ userRouter.get("/status/:listId", async (req, res) => {
 	let UUID = req.cookies.UUID || null;
 
 	try {
+		let isMember = false;
+		let isOwner = false;
 
-		// for baserow
-		const { isMember, isOwner } = await getUserStatus(req, UUID);
+		// For baserow
+		if (airtable) {
+			const statusA = await getUserStatusA(req, UUID);
+			isMember = statusA.isMember;
+			isOwner = statusA.isOwner;
+		} else {
+			const status = await getUserStatus(req, UUID);
+			isMember = status.isMember;
+			isOwner = status.isOwner;
+		}
 
 		if (isOwner && !isMember) {
 			res.json({

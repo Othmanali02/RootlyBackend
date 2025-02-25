@@ -12,14 +12,28 @@ const {
 	getTeamStatus,
 } = require("./baserow/teamMethods.js");
 
+const {
+	getTeamInfoA,
+	createTeamA,
+	getUserTeamsA,
+	addMemberA,
+	removeMemberA,
+	getTeamStatusA,
+} = require("./airtable/teamMethods.js");
+
 const teamRouter = express.Router();
+
+let airtable = true;
 
 teamRouter.patch(
 	"/removeMember",
 	expressAsyncHandler(async (req, res) => {
 		try {
 			// for baserow
-			const newMembers = await removeMember(req);
+			let newMembers = null;
+
+			if (airtable) newMembers = await removeMemberA(req);
+			else newMembers = await removeMember(req);
 
 			res.status(200).json({ message: "Removed", newMembers: newMembers });
 		} catch (error) {
@@ -33,7 +47,18 @@ teamRouter.patch(
 	expressAsyncHandler(async (req, res) => {
 		try {
 			// for baserow
-			const { userObj, newMembers } = await addMember(req);
+			let userObj = null;
+			let newMembers = null;
+
+			if (airtable) {
+				const addA = await addMemberA(req);
+				userObj = addA.userObj;
+				newMembers = addA.newMembers;
+			} else {
+				const add = await addMember(req);
+				userObj = add.userObj;
+				newMembers = add.newMembers;
+			}
 
 			res.status(200).json({
 				userObj: userObj,
@@ -49,8 +74,18 @@ teamRouter.post(
 	"/getUserTeams",
 	expressAsyncHandler(async (req, res) => {
 		try {
+			let teamList = null;
+			let sharedTeams = null;
 			// for baserow
-			const { teamList, sharedTeams } = await getUserTeams(req);
+			if (airtable) {
+				const userTeams = await getUserTeamsA(req);
+				teamList = userTeams.transformedTeamList;
+				sharedTeams = userTeams.transformedSharedList;
+			} else {
+				const userTeams = await getUserTeams(req);
+				teamList = userTeams.teamList;
+				sharedTeams = userTeams.sharedTeams;
+			}
 
 			res.status(200).json({ teamList: teamList, sharedTeams: sharedTeams });
 		} catch (error) {
@@ -64,7 +99,9 @@ teamRouter.post(
 	expressAsyncHandler(async (req, res) => {
 		try {
 			// for baserow
-			const resBody = await getTeamInfo(req);
+			let resBody = null;
+			if (airtable) resBody = await getTeamInfoA(req);
+			else resBody = await getTeamInfo(req);
 
 			res.status(200).json(resBody);
 		} catch (error) {
@@ -81,7 +118,10 @@ teamRouter.post(
 	expressAsyncHandler(async (req, res) => {
 		try {
 			// for baserow
-			const data = await createTeam(req);
+			let data = null;
+
+			if (airtable) data = await createTeamA(req);
+			else data = await createTeam(req);
 
 			res.status(200).json(data);
 		} catch (error) {
@@ -99,8 +139,15 @@ teamRouter.get("/status/:teamId", async (req, res) => {
 
 	try {
 		// for baserow
-		const { isMember, isOwner } = await getTeamStatus(req, teamId, UUID);
-
+		if (airtable) {
+			const statusA = await getTeamStatusA(req, teamId, UUID);
+			isMember = statusA.isMember;
+			isOwner = statusA.isOwner;
+		} else {
+			const status = await getTeamStatus(req, teamId, UUID);
+			isMember = status.isMember;
+			isOwner = status.isOwner;
+		}
 		if (isOwner && !isMember) {
 			res.json({
 				isOwner: true,
