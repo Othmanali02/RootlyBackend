@@ -1,0 +1,139 @@
+version: '3.8'
+
+services:
+  frontend-build:
+    image: 01hman/rootly-frontend:latest
+    working_dir: /frontend
+    networks:
+      - backend
+    ports:
+      - 8080:8080
+    depends_on:
+      - backend
+
+  backend:
+    image: 01hman/rootly-backend:latest 
+    working_dir: /backend
+    volumes:
+      - /home/octopus/envrootly:/backend/.env
+    networks:
+      - backend
+    ports:
+      - 3000:3000
+    depends_on:
+      - cropontology
+ 
+  # MySQL Database (comysql)
+  comysql:
+    image: mysql:8.0.23
+    container_name: comysql
+    environment:
+      MYSQL_ROOT_PASSWORD: 72EkBqCs!
+    volumes:
+      - /opt/new_site/cropontology/mysql/data:/var/lib/mysql
+    ports:
+      - 3306:3306
+    networks:
+      - elastic
+
+  # MongoDB Database (comongodb)
+  comongodb:
+    image: mongo:3.6.8
+    container_name: comongodb
+    volumes:
+      - /opt/new_site/cropontology/mongo/data:/data/db
+    ports:
+      - 27017:27017
+    networks:
+      - elastic
+
+  # Neo4j Database (coneo4j)
+  coneo4j:
+    image: neo4j:4.1.2
+    container_name: coneo4j
+    volumes:
+      - /opt/new_site/cropontology/neo4j/data:/data
+      - /opt/new_site/cropontology/neo4j/plugins:/var/lib/neo4j/plugins
+    ports:
+      - 7474:7474
+      - 7687:7687
+    networks:
+      - elastic
+
+  # Elasticsearch Cluster Node 1 (coes01)
+  coes01:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.10.1
+    container_name: coes01
+    environment:
+      - node.name=coes01
+      - cluster.name=es-docker-cluster
+      - discovery.seed_hosts=coes02
+      - cluster.initial_master_nodes=coes01,coes02
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - /opt/new_site/cropontology/es/data:/usr/share/elasticsearch/data
+    ports:
+      - 9200:9200
+    networks:
+      - elastic
+
+  # Elasticsearch Cluster Node 2 (coes02)
+  coes02:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.10.1
+    container_name: coes02
+    environment:
+      - node.name=coes02
+      - cluster.name=es-docker-cluster
+      - discovery.seed_hosts=coes01
+      - cluster.initial_master_nodes=coes01,coes02
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - /opt/new_site/cropontology/es/data2:/usr/share/elasticsearch/data
+    ports:
+      - 9201:9200
+    networks:
+      - elastic
+  
+  cropontology:
+    build:
+      context: /home/octopus/Documents/CropOntology/cropontology
+      dockerfile: Dockerfile
+    networks:
+      - elastic
+      - backend
+    ports:
+      - "5900:5900"
+    volumes:
+      - /home/octopus/Documents/CropOntology/coempty:/app/cropontology/coempty
+      - /home/octopus/Documents/CropOntology/cropontology/facets.json:/app/cropontology/facets.json
+    depends_on:
+      - comysql
+      - comongodb
+      - coneo4j
+      - coes01
+      - coes02
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6380:6379"
+    networks:
+      - elastic
+
+networks:
+  backend:
+    driver: bridge
+  elastic:
+    driver: bridge
+
