@@ -119,7 +119,6 @@ async function getTeamInfoA(req) {
 		const matchingList = listInformation.find((list) => list.id === teamList);
 		console.log(matchingList);
 		if (matchingList) {
-
 			let user = await getUserRow(matchingList.fields.Owner[0]);
 			matchinglists.push({
 				listName: matchingList.fields.Name,
@@ -388,6 +387,88 @@ async function removeMemberA(req) {
 	return response.data.fields["User ID"];
 }
 
+async function removeListA(req) {
+	let teamId = req.body.teamId;
+	let listId = req.body.listId;
+	let listBrowID = req.body.listBrowID;
+	let teamLists = req.body.teamLists;
+
+	const bRowURL1 = `https://api.airtable.com/v0/${process.env.base_url}/${process.env.teamsTable}/${teamId}`;
+	const response1 = await axios.get(bRowURL1, {
+		headers: {
+			Authorization: `Bearer ${process.env.AIRTABLE_API_KEY}`,
+			"Content-Type": "application/json",
+		},
+	});
+	let currTeamLists = response1.data.fields.Lists;
+
+	currTeamLists = currTeamLists.filter((item) => item !== listId);
+
+	console.log(listId);
+
+	console.log(currTeamLists);
+
+	const bRowURL = `https://api.airtable.com/v0/${process.env.base_url}/${process.env.teamsTable}/${teamId}`;
+	const response = await axios.patch(
+		bRowURL,
+		{ fields: { Lists: currTeamLists } },
+		{
+			headers: {
+				Authorization: `Bearer ${process.env.AIRTABLE_API_KEY}`,
+				"Content-Type": "application/json",
+			},
+		}
+	);
+
+	return response.data.fields["Lists"];
+}
+
+async function addListsA(req) {
+	let teamID = req.body.teamId;
+	let chosenLists = req.body.chosenLists;
+
+	let nextPageUrl = `https://api.airtable.com/v0/${process.env.base_url}/${process.env.teamsTable}/${teamID}`;
+	const response1 = await axios.get(nextPageUrl, {
+		headers: {
+			Authorization: `Bearer ${process.env.AIRTABLE_API_KEY}`,
+			"Content-Type": "application/json",
+		},
+	});
+
+	console.log(response1.data);
+	let currLists = response1.data.fields.Lists;
+
+	let updatedLists = [];
+
+	console.log(currLists);
+
+	console.log(chosenLists);
+	if (currLists) {
+		for (let i = 0; i < currLists.length; i++) {
+			updatedLists.push(currLists[i]);
+		}
+	}
+	for (let i = 0; i < chosenLists.length; i++) {
+		updatedLists.push(chosenLists[i].id);
+	}
+	console.log(updatedLists);
+
+	// Update the team with the new lists
+	const bRowURL = `https://api.airtable.com/v0/${process.env.base_url}/${process.env.teamsTable}/${teamID}`;
+	const response = await axios.patch(
+		bRowURL,
+		{ fields: { Lists: updatedLists } },
+		{
+			headers: {
+				Authorization: `Bearer ${process.env.AIRTABLE_API_KEY}`,
+				"Content-Type": "application/json",
+			},
+		}
+	);
+
+	return { newLists: response.data.fields["Lists"] };
+}
+
 async function getTeamStatusA(req, teamId, UUID) {
 	let isMember = false;
 	let isOwner = false;
@@ -437,4 +518,6 @@ module.exports = {
 	addMemberA,
 	removeMemberA,
 	getTeamStatusA,
+	removeListA,
+	addListsA,
 };

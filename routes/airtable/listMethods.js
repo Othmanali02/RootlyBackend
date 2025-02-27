@@ -24,6 +24,66 @@ async function getUserByID(ownerId) {
 	}
 }
 
+// i should develop this
+// async function getUserListsAUID(req) {
+// 	let email = req.body.email;
+// 	let allUsers = [];
+
+// 	let nextPageUrl = `https://api.airtable.com/v0/${process.env.base_url}/${process.env.usersTable}/${req.body.userID}`;
+
+// 	const response1 = await axios.get(nextPageUrl, {
+// 		headers: {
+// 			Authorization: `Bearer ${process.env.AIRTABLE_API_KEY}`,
+// 			"Content-Type": "application/json",
+// 		},
+// 	});
+
+// 	const userObj = allUsers.find((item) => item.fields.Email === email);
+// 	let listInformation = [];
+
+// 	const airtableURL = `https://api.airtable.com/v0/${process.env.base_url}/${process.env.listsTable}`;
+
+// 	const response = await axios.get(airtableURL, {
+// 		headers: {
+// 			Authorization: `Bearer ${process.env.AIRTABLE_API_KEY}`,
+// 			"Content-Type": "application/json",
+// 		},
+// 	});
+
+// 	let records = response.data.records;
+
+// 	for (let i = 0; i < records.length; i++) {
+// 		if (records[i].fields.Owner && records[i].fields.Owner[0] === userObj.id) {
+// 			listInformation.push(records[i]);
+// 		}
+// 	}
+// 	const transformedListInformation = listInformation.map((record) => {
+// 		return {
+// 			id: record.id,
+// 			order: record.createdTime,
+// 			"List ID": record.fields["List ID"],
+// 			Name: record.fields.Name,
+// 			Owner: record.fields.Owner
+// 				? record.fields.Owner.map((ownerId, index) => ({
+// 						id: ownerId,
+// 						value: ownerId,
+// 						order: index + 1,
+// 				  }))
+// 				: [],
+// 			Length: record.fields.Length,
+// 			"List-Content": record.fields["List-Content"]
+// 				? record.fields["List-Content"].map((contentId, index) => ({
+// 						id: index + 1,
+// 						value: contentId,
+// 						order: index + 1,
+// 				  }))
+// 				: [],
+// 			"Team ID": [],
+// 		};
+// 	});
+// 	return transformedListInformation;
+// }
+
 async function getUserListsA(req) {
 	let email = req.body.email;
 	let allUsers = [];
@@ -77,6 +137,7 @@ async function getUserListsA(req) {
 				? record.fields.Owner.map((ownerId, index) => ({
 						id: ownerId,
 						value: ownerId,
+						email: email,
 						order: index + 1,
 				  }))
 				: [],
@@ -128,10 +189,12 @@ async function getListInfoA(req) {
 			break;
 		}
 	}
-
-	const matchedItems = listContent.filter((item) =>
-		item.fields["List ID"].some((list) => list + "" === req.body.listId)
-	);
+	const matchedItems = listContent.filter((item) => {
+		return (
+			Array.isArray(item.fields["List ID"]) &&
+			item.fields["List ID"].some((list) => list + "" === req.body.listId)
+		);
+	});
 
 	let variableDbIds = [];
 	let customVariables = [];
@@ -148,7 +211,7 @@ async function getListInfoA(req) {
 		variableDbIds.push(variableDbId);
 		airtableIds[variableDbId] = airtableID;
 	}
-	const cropOntologyUrl = "http://cropontology:5900/brapi/v2/search/variables";
+	const cropOntologyUrl = "http://localhost:5900/brapi/v2/search/variables";
 	const reqBody = {
 		observationVariableDbIds: variableDbIds,
 	};
@@ -519,6 +582,21 @@ async function getUserCustomVariablesA(req) {
 	return customVariablesArray;
 }
 
+async function removeUserListA(req) {
+	let listId = req.body.listId;
+	let UUID = req.body.listId;
+
+	const bRowURL1 = `https://api.airtable.com/v0/${process.env.base_url}/${process.env.teamsTable}/${listId}`;
+	const response1 = await axios.delete(bRowURL1, {
+		headers: {
+			Authorization: `Bearer ${process.env.AIRTABLE_API_KEY}`,
+			"Content-Type": "application/json",
+		},
+	});
+
+	return response1.data;
+}
+
 module.exports = {
 	getUserListsA,
 	getListInfoA,
@@ -528,4 +606,5 @@ module.exports = {
 	addMultipleCustomVariablesA,
 	createListA,
 	getUserCustomVariablesA,
+	removeUserListA,
 };

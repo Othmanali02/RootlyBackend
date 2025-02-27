@@ -10,6 +10,8 @@ const {
 	addMember,
 	removeMember,
 	getTeamStatus,
+	removeList,
+	addLists,
 } = require("./baserow/teamMethods.js");
 
 const {
@@ -19,11 +21,52 @@ const {
 	addMemberA,
 	removeMemberA,
 	getTeamStatusA,
+	removeListA,
+	addListsA,
 } = require("./airtable/teamMethods.js");
 
 const teamRouter = express.Router();
 
 let airtable = true;
+
+teamRouter.patch(
+	"/removeList",
+	expressAsyncHandler(async (req, res) => {
+		try {
+			// for baserow
+			let newLists = null;
+
+			if (airtable) newLists = await removeListA(req);
+			else newLists = await removeList(req);
+
+			res.status(200).json({ message: "Removed", newLists: newLists });
+		} catch (error) {
+			console.log(error);
+		}
+	})
+);
+
+teamRouter.patch(
+	"/addLists",
+	expressAsyncHandler(async (req, res) => {
+		try {
+			// for baserow
+			let response = null;
+
+			if (airtable) {
+				response = await addListsA(req);
+			} else {
+				response = await addLists(req);
+			}
+
+			res.status(200).json({
+				newLists: response.newLists,
+			});
+		} catch (error) {
+			console.log(error);
+		}
+	})
+);
 
 teamRouter.patch(
 	"/removeMember",

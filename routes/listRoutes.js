@@ -17,6 +17,7 @@ const {
 	addMultipleCustomVariables,
 	createList,
 	getUserCustomVariables,
+	removeUserList,
 } = require("./baserow/listMethods.js");
 
 const {
@@ -28,6 +29,7 @@ const {
 	addMultipleCustomVariablesA,
 	createListA,
 	getUserCustomVariablesA,
+	removeUserListA,
 } = require("./airtable/listMethods.js");
 
 const listRouter = express.Router();
@@ -304,6 +306,28 @@ listRouter.post(
 			}
 
 			res.status(200).json(resBody);
+		} catch (error) {
+			console.error("Error making the POST request:", error);
+			res
+				.status(500)
+				.json({ message: "Internal Server Error", error: error.message });
+		}
+	})
+);
+
+listRouter.post(
+	"/removeUserList",
+	expressAsyncHandler(async (req, res) => {
+		try {
+			// for baserow
+			let updatedLists = null;
+
+			if (airtable) updatedLists = await removeUserListA(req);
+			else updatedLists = await removeUserList(req);
+			res.status(200).json({
+				message: "List Removed",
+				updatedLists: updatedLists,
+			});
 		} catch (error) {
 			console.error("Error making the POST request:", error);
 			res
