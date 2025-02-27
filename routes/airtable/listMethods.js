@@ -148,7 +148,7 @@ async function getListInfoA(req) {
 		variableDbIds.push(variableDbId);
 		airtableIds[variableDbId] = airtableID;
 	}
-	const cropOntologyUrl = "http://127.0.0.1:5900/brapi/v2/search/variables";
+	const cropOntologyUrl = "http://cropontology:5900/brapi/v2/search/variables";
 	const reqBody = {
 		observationVariableDbIds: variableDbIds,
 	};
