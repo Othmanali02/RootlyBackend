@@ -27,7 +27,7 @@ const {
 
 const teamRouter = express.Router();
 
-let airtable = true;
+let airtable = false;
 
 teamRouter.patch(
 	"/removeList",

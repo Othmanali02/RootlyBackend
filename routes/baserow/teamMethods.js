@@ -327,6 +327,94 @@ async function getTeamStatus(req, teamId, UUID) {
 	return { isMember, isOwner };
 }
 
+async function removeList(req) {
+	let teamId = req.body.teamId;
+	let listId = req.body.listId;
+
+	console.log(req.body);
+	let listBrowID = req.body.listBrowID;
+	let teamLists = req.body.teamLists;
+	console.log(req.body);
+
+	const bRowURL1 = `https://data.ardbase.org/api/database/rows/table/2160/${req.body.teamId}/?user_field_names=true`;
+	const response1 = await axios.get(bRowURL1, {
+		headers: {
+			Authorization: `Token ${process.env.BASEROW_TOKEN}`,
+			"Content-Type": "application/json",
+		},
+	});
+	let currTeamLists = response1.data.Lists;
+
+	console.log(currTeamLists);
+	currTeamLists = currTeamLists.filter((item) => item.value !== listId);
+
+	console.log(currTeamLists);
+
+	let cleanedLists = [];
+	for (let i = 0; i < currTeamLists.length; i++) {
+		cleanedLists.push(currTeamLists[i].id);
+	}
+
+	const bRowURL = `https://data.ardbase.org/api/database/rows/table/2160/${req.body.teamId}/?user_field_names=true`;
+	const response = await axios.patch(
+		bRowURL,
+		{ Lists: cleanedLists },
+		{
+			headers: {
+				Authorization: `Token ${process.env.BASEROW_TOKEN}`,
+				"Content-Type": "application/json",
+			},
+		}
+	);
+
+	return response.data["Lists"];
+}
+
+async function addLists(req) {
+	let teamID = req.body.teamId;
+	let chosenLists = req.body.chosenLists;
+
+	console.log(req.body);
+
+	const bRowURL1 = `https://data.ardbase.org/api/database/rows/table/2160/${req.body.teamId}/?user_field_names=true`;
+	const response1 = await axios.get(bRowURL1, {
+		headers: {
+			Authorization: `Token ${process.env.BASEROW_TOKEN}`,
+			"Content-Type": "application/json",
+		},
+	});
+
+	let currLists = response1.data.Lists;
+
+	let updatedLists = [];
+
+	console.log(chosenLists);
+	if (currLists) {
+		for (let i = 0; i < currLists.length; i++) {
+			updatedLists.push(currLists[i].id);
+		}
+	}
+	for (let i = 0; i < chosenLists.length; i++) {
+		updatedLists.push(chosenLists[i].id);
+	}
+	console.log(updatedLists);
+
+	// // Update the team with the new lists
+	const bRowURL = `https://data.ardbase.org/api/database/rows/table/2160/${req.body.teamId}/?user_field_names=true`;
+	const response = await axios.patch(
+		bRowURL,
+		{ Lists: updatedLists },
+		{
+			headers: {
+				Authorization: `Token ${process.env.BASEROW_TOKEN}`,
+				"Content-Type": "application/json",
+			},
+		}
+	);
+
+	return { newLists: response.data["Lists"] };
+}
+
 module.exports = {
 	getTeamInfo,
 	createTeam,
@@ -334,4 +422,6 @@ module.exports = {
 	addMember,
 	removeMember,
 	getTeamStatus,
+	removeList,
+	addLists,
 };

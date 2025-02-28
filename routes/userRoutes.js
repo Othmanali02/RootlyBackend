@@ -17,7 +17,7 @@ const cookieParser = require("cookie-parser");
 const discoveryUri = process.env.DISCOVERY_URI;
 const redirectUri = process.env.OAUTH_REDIRECT_URI;
 
-const airtable = true;
+const airtable = false;
 
 var OAuthClient;
 authUtils.buildAuthClient(

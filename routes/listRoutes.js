@@ -33,7 +33,7 @@ const {
 } = require("./airtable/listMethods.js");
 
 const listRouter = express.Router();
-const airtable = true;
+const airtable = false;
 
 function mapFormat(dataType) {
 	const typeMap = {

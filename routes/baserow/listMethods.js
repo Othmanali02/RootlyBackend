@@ -56,9 +56,29 @@ async function getUserLists(req) {
 		if (listInformation[i].Owner[0].id === userObj.id) {
 			userLists.push(listInformation[i]);
 		}
-		// listInformation.push(response.data);
 	}
-	return userLists;
+
+	const transformedListInformation = userLists.map((record) => {
+		return {
+			id: record.id,
+			order: record.order,
+			"List ID": record["List ID"],
+			Name: record.Name,
+			Owner: record.Owner
+				? record.Owner.map((ownerId, index) => ({
+						id: ownerId,
+						value: ownerId,
+						email: email,
+						order: index + 1,
+				  }))
+				: [],
+			Length: record.Length,
+			"List-Content": record["List-Content"],
+		};
+	});
+	console.log(userLists);
+
+	return transformedListInformation;
 }
 
 async function getListInfo(req) {
@@ -476,6 +496,21 @@ async function getUserCustomVariables(req) {
 	return customVariablesArray;
 }
 
+async function removeUserList(req) {
+	let listId = req.body.listId;
+	let UUID = req.body.listId;
+
+	const bRowURL1 = `https://data.ardbase.org/api/database/rows/table/2159/${listId}/?user_field_names=true`;
+	const response1 = await axios.delete(bRowURL1, {
+		headers: {
+			Authorization: `Token ${process.env.BASEROW_TOKEN}`,
+			"Content-Type": "application/json",
+		},
+	});
+
+	return response1.data;
+}
+
 module.exports = {
 	getUserLists,
 	getListInfo,
@@ -485,4 +520,5 @@ module.exports = {
 	addMultipleCustomVariables,
 	createList,
 	getUserCustomVariables,
+	removeUserList,
 };
