@@ -7,8 +7,7 @@ async function getUserStatus(req, UUID) {
 	let isMember = false;
 	let isOwner = false;
 
-	// checks if the user id exists in the list
-	const bRowURL = `https://data.ardbase.org/api/database/rows/table/2159/${req.params.listId}/?user_field_names=true`;
+	const bRowURL = `${process.env.brow_base_url}/api/database/rows/table/${process.env.bRowLists}/${req.params.listId}/?user_field_names=true`;
 
 	const response = await axios.get(bRowURL, {
 		headers: {
@@ -25,8 +24,7 @@ async function getUserStatus(req, UUID) {
 		// checks if the user exists in a team that has that list in it
 		let allTeams = [];
 
-		let nextPageUrl =
-			"https://data.ardbase.org/api/database/rows/table/2160/?user_field_names=true&size=200";
+		let nextPageUrl = `${process.env.brow_base_url}/api/database/rows/table/${process.env.bRowTeams}/?user_field_names=true&size=200`;
 
 		while (nextPageUrl) {
 			try {
@@ -63,8 +61,7 @@ async function getUserStatus(req, UUID) {
 
 async function pushCredentialsToBaserow(name, email) {
 	try {
-		const getusers =
-			"https://data.ardbase.org/api/database/rows/table/2158/?user_field_names=true";
+		const getusers = `${process.env.brow_base_url}/api/database/rows/table/${process.env.bRowUsers}/?user_field_names=true`;
 
 		const response = await axios.get(getusers, {
 			headers: {
@@ -91,8 +88,7 @@ async function pushCredentialsToBaserow(name, email) {
 
 			console.log(req_data);
 
-			const usersUrl =
-				"https://data.ardbase.org/api/database/rows/table/2158/?user_field_names=true";
+			const usersUrl = `${process.env.brow_base_url}/api/database/rows/table/${process.env.bRowUsers}/?user_field_names=true`;
 
 			const response1 = await axios.post(usersUrl, req_data, {
 				headers: {

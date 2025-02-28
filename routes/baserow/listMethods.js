@@ -6,8 +6,7 @@ async function getUserLists(req) {
 	let email = req.body.email;
 	let allUsers = [];
 
-	let nextPageUrl =
-		"https://data.ardbase.org/api/database/rows/table/2158/?user_field_names=true&size=200";
+	let nextPageUrl = `${process.env.brow_base_url}/api/database/rows/table/${process.env.bRowUsers}/?user_field_names=true&size=200`;
 
 	while (nextPageUrl) {
 		try {
@@ -30,8 +29,7 @@ async function getUserLists(req) {
 
 	let listInformation = [];
 
-	let nextPageUrl1 =
-		"https://data.ardbase.org/api/database/rows/table/2159/?user_field_names=true&size=200";
+	let nextPageUrl1 = `${process.env.brow_base_url}/api/database/rows/table/${process.env.bRowLists}/?user_field_names=true&size=200`;
 
 	while (nextPageUrl1) {
 		try {
@@ -82,7 +80,7 @@ async function getUserLists(req) {
 }
 
 async function getListInfo(req) {
-	const bRowURL = `https://data.ardbase.org/api/database/rows/table/2159/${req.body.listId}/?user_field_names=true`;
+	const bRowURL = `${process.env.brow_base_url}/api/database/rows/table/${process.env.bRowLists}/${req.body.listId}/?user_field_names=true`;
 
 	const response = await axios.get(bRowURL, {
 		headers: {
@@ -100,8 +98,7 @@ async function getListInfo(req) {
 
 	let listContent = [];
 
-	let nextPageUrl =
-		"https://data.ardbase.org/api/database/rows/table/2161/?user_field_names=true&size=200";
+	let nextPageUrl = `${process.env.brow_base_url}/api/database/rows/table/${process.env.bRowListContent}/?user_field_names=true&size=200`;
 
 	while (nextPageUrl) {
 		try {
@@ -139,10 +136,10 @@ async function getListInfo(req) {
 				baserowID: matchedItems[i].id,
 			});
 		variableDbIds.push(variableDbId);
-		baserowIds[variableDbId] = baserowID; // Map each variableDbId to its corresponding baserowID
+		baserowIds[variableDbId] = baserowID;
 	}
 
-	const cropOntologyUrl = "http://127.0.0.1:5900/brapi/v2/search/variables";
+	const cropOntologyUrl = `${process.env.cropOntologyURL}/brapi/v2/search/variables`;
 	const reqBody = {
 		observationVariableDbIds: variableDbIds,
 	};
@@ -177,8 +174,7 @@ async function addVariable(req) {
 	let listId = req.body.listId;
 	let traits = req.body.selectedVariables;
 
-	const secondUrl =
-		"https://data.ardbase.org/api/database/rows/table/2161/?user_field_names=true";
+	const secondUrl = `${process.env.brow_base_url}/api/database/rows/table/${process.env.bRowListContent}/?user_field_names=true`;
 
 	for (let i = 0; i < traits.length; i++) {
 		const listContentData = {
@@ -201,7 +197,7 @@ async function addVariable(req) {
 		console.log(response1);
 	}
 
-	const getRow = `https://data.ardbase.org/api/database/rows/table/2159/${req.body.listBrowID}/?user_field_names=true`;
+	const getRow = `${process.env.brow_base_url}/api/database/rows/table/${process.env.bRowLists}/${req.body.listBrowID}/?user_field_names=true`;
 
 	const response = await axios.get(getRow, {
 		headers: {
@@ -212,7 +208,7 @@ async function addVariable(req) {
 
 	let newLength = Number(response.data.Length) + traits.length;
 
-	const patchRow = `https://data.ardbase.org/api/database/rows/table/2159/${req.body.listBrowID}/?user_field_names=true`;
+	const patchRow = `${process.env.brow_base_url}/api/database/rows/table/${process.env.bRowLists}/${req.body.listBrowID}/?user_field_names=true`;
 
 	const response1 = await axios.patch(
 		patchRow,
@@ -234,7 +230,7 @@ async function removeVariable(req) {
 	let listBrowID = req.body.listBrowID;
 	let listContentBrowID = req.body.listContentBrowID;
 
-	const delRow = `https://data.ardbase.org/api/database/rows/table/2161/${listContentBrowID}/?user_field_names=true`;
+	const delRow = `${process.env.brow_base_url}/api/database/rows/table/${process.env.bRowListContent}/${listContentBrowID}/?user_field_names=true`;
 
 	const deleteResponse = await axios.delete(delRow, {
 		headers: {
@@ -243,7 +239,7 @@ async function removeVariable(req) {
 		},
 	});
 
-	const getRow = `https://data.ardbase.org/api/database/rows/table/2159/${listBrowID}/?user_field_names=true`;
+	const getRow = `${process.env.brow_base_url}/api/database/rows/table/${process.env.bRowLists}/${listBrowID}/?user_field_names=true`;
 
 	const response = await axios.get(getRow, {
 		headers: {
@@ -254,7 +250,7 @@ async function removeVariable(req) {
 
 	let newLength = Number(response.data.Length) - 1;
 
-	const patchRow = `https://data.ardbase.org/api/database/rows/table/2159/${listBrowID}/?user_field_names=true`;
+	const patchRow = `${process.env.brow_base_url}/api/database/rows/table/${process.env.bRowLists}/${listBrowID}/?user_field_names=true`;
 
 	const response1 = await axios.patch(
 		patchRow,
@@ -278,8 +274,7 @@ async function addCustomVariable(req) {
 	let listBrowID = req.body.listBrowID;
 	let userInput = req.body.userInput;
 
-	const secondUrl =
-		"https://data.ardbase.org/api/database/rows/table/2161/?user_field_names=true";
+	const secondUrl = `${process.env.brow_base_url}/api/database/rows/table/${process.env.bRowListContent}/?user_field_names=true`;
 
 	const listContentData = {
 		"List Content ID": await generateID(),
@@ -298,7 +293,7 @@ async function addCustomVariable(req) {
 
 	console.log(listContentResponse.data);
 
-	const getRow = `https://data.ardbase.org/api/database/rows/table/2159/${listBrowID}/?user_field_names=true`;
+	const getRow = `${process.env.brow_base_url}/api/database/rows/table/${process.env.bRowLists}/${listBrowID}/?user_field_names=true`;
 
 	const response = await axios.get(getRow, {
 		headers: {
@@ -309,7 +304,7 @@ async function addCustomVariable(req) {
 
 	let newLength = Number(response.data.Length) + 1;
 
-	const patchRow = `https://data.ardbase.org/api/database/rows/table/2159/${listBrowID}/?user_field_names=true`;
+	const patchRow = `${process.env.brow_base_url}/api/database/rows/table/${process.env.bRowLists}/${listBrowID}/?user_field_names=true`;
 
 	const response1 = await axios.patch(
 		patchRow,
@@ -333,8 +328,7 @@ async function addMultipleCustomVariables(req) {
 	let variablesAdded = [];
 
 	for (let i = 0; i < chosenVariables.length; i++) {
-		const secondUrl =
-			"https://data.ardbase.org/api/database/rows/table/2161/?user_field_names=true";
+		const secondUrl = `${process.env.brow_base_url}/api/database/rows/table/${process.env.bRowListContent}/?user_field_names=true`;
 
 		const listContentData = {
 			"List Content ID": await generateID(),
@@ -356,7 +350,7 @@ async function addMultipleCustomVariables(req) {
 		});
 	}
 
-	const getRow = `https://data.ardbase.org/api/database/rows/table/2159/${listBrowID}/?user_field_names=true`;
+	const getRow = `${process.env.brow_base_url}/api/database/rows/table/${process.env.bRowLists}/${listBrowID}/?user_field_names=true`;
 
 	const response = await axios.get(getRow, {
 		headers: {
@@ -367,7 +361,7 @@ async function addMultipleCustomVariables(req) {
 
 	let newLength = Number(response.data.Length) + chosenVariables.length;
 
-	const patchRow = `https://data.ardbase.org/api/database/rows/table/2159/${listBrowID}/?user_field_names=true`;
+	const patchRow = `${process.env.brow_base_url}/api/database/rows/table/${process.env.bRowLists}/${listBrowID}/?user_field_names=true`;
 
 	const response1 = await axios.patch(
 		patchRow,
@@ -403,8 +397,7 @@ async function createList(req) {
 	console.log(req_data);
 	// Creating the list in the list table
 
-	const firstUrl =
-		"https://data.ardbase.org/api/database/rows/table/2159/?user_field_names=true";
+	const firstUrl = `${process.env.brow_base_url}/api/database/rows/table/${process.env.bRowLists}/?user_field_names=true`;
 
 	const response = await axios.post(firstUrl, req_data, {
 		headers: {
@@ -415,8 +408,7 @@ async function createList(req) {
 
 	// Creating the lsit content in the list content table
 
-	const secondUrl =
-		"https://data.ardbase.org/api/database/rows/table/2161/?user_field_names=true";
+	const secondUrl = `${process.env.brow_base_url}/api/database/rows/table/${process.env.bRowListContent}/?user_field_names=true`;
 
 	for (let i = 0; i < requestData.traits.length; i++) {
 		const listContentData = {
@@ -444,8 +436,7 @@ async function getUserCustomVariables(req) {
 
 	// should be able to paginate if the number of rows is exceeded
 
-	const bRowURL =
-		"https://data.ardbase.org/api/database/rows/table/2159/?user_field_names=true&size=200";
+	const bRowURL = `${process.env.brow_base_url}/api/database/rows/table/${process.env.bRowLists}/?user_field_names=true&size=200`;
 
 	const response = await axios.get(bRowURL, {
 		headers: {
@@ -460,8 +451,7 @@ async function getUserCustomVariables(req) {
 
 	const allListContents = userLists.map((item) => item["List-Content"]).flat();
 
-	const bRowURL1 =
-		"https://data.ardbase.org/api/database/rows/table/2161/?user_field_names=true&size=200";
+	const bRowURL1 = `${process.env.brow_base_url}/api/database/rows/table/${process.env.bRowListContent}/?user_field_names=true&size=200`;
 
 	const response1 = await axios.get(bRowURL1, {
 		headers: {
@@ -500,7 +490,7 @@ async function removeUserList(req) {
 	let listId = req.body.listId;
 	let UUID = req.body.listId;
 
-	const bRowURL1 = `https://data.ardbase.org/api/database/rows/table/2159/${listId}/?user_field_names=true`;
+	const bRowURL1 = `${process.env.brow_base_url}/api/database/rows/table/${process.env.bRowLists}/${listId}/?user_field_names=true`;
 	const response1 = await axios.delete(bRowURL1, {
 		headers: {
 			Authorization: `Token ${process.env.BASEROW_TOKEN}`,

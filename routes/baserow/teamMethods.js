@@ -4,7 +4,7 @@ const generateID = require("../../services/tools.js");
 
 async function getUserByID(ownerId) {
 	try {
-		const bRowURL = `https://data.ardbase.org/api/database/rows/table/2158/${ownerId}/?user_field_names=true`;
+		const bRowURL = `${process.env.brow_base_url}/api/database/rows/table/${process.env.bRowUsers}/${ownerId}/?user_field_names=true`;
 
 		const response = await axios.get(bRowURL, {
 			headers: {
@@ -20,7 +20,7 @@ async function getUserByID(ownerId) {
 }
 
 async function getTeamInfo(req) {
-	const bRowURL = `https://data.ardbase.org/api/database/rows/table/2160/${req.body.teamId}/?user_field_names=true`;
+	const bRowURL = `${process.env.brow_base_url}/api/database/rows/table/${process.env.bRowTeams}/${req.body.teamId}/?user_field_names=true`;
 
 	const response = await axios.get(bRowURL, {
 		headers: {
@@ -33,8 +33,7 @@ async function getTeamInfo(req) {
 
 	let allLists = [];
 
-	let nextPageUrl =
-		"https://data.ardbase.org/api/database/rows/table/2159/?user_field_names=true&size=200";
+	let nextPageUrl = `${process.env.brow_base_url}/api/database/rows/table/${process.env.bRowLists}/?user_field_names=true&size=200`;
 
 	while (nextPageUrl) {
 		try {
@@ -104,8 +103,7 @@ async function createTeam(req) {
 	// 	Length: requestData.traits.length,
 	// };
 
-	const usersURL =
-		"https://data.ardbase.org/api/database/rows/table/2158/?user_field_names=true";
+	const usersURL = `${process.env.brow_base_url}/api/database/rows/table/${process.env.bRowUsers}/?user_field_names=true`;
 
 	const response1 = await axios.get(usersURL, {
 		headers: {
@@ -139,8 +137,7 @@ async function createTeam(req) {
 
 	console.log(req_data);
 
-	const teamsURL =
-		"https://data.ardbase.org/api/database/rows/table/2160/?user_field_names=true";
+	const teamsURL = `${process.env.brow_base_url}/api/database/rows/table/${process.env.bRowTeams}/?user_field_names=true`;
 
 	const response = await axios.post(teamsURL, req_data, {
 		headers: {
@@ -157,8 +154,7 @@ async function getUserTeams(req) {
 	console.log(req.body.userId);
 	let allTeams = [];
 
-	let nextPageUrl =
-		"https://data.ardbase.org/api/database/rows/table/2160/?user_field_names=true&size=200";
+	let nextPageUrl = `${process.env.brow_base_url}/api/database/rows/table/${process.env.bRowTeams}/?user_field_names=true&size=200`;
 
 	while (nextPageUrl) {
 		try {
@@ -214,8 +210,7 @@ async function addMember(req) {
 
 	let allUsers = [];
 
-	let nextPageUrl =
-		"https://data.ardbase.org/api/database/rows/table/2158/?user_field_names=true&size=200";
+	let nextPageUrl = `${process.env.brow_base_url}/api/database/rows/table/${process.env.bRowUsers}/?user_field_names=true&size=200`;
 
 	while (nextPageUrl) {
 		try {
@@ -237,7 +232,7 @@ async function addMember(req) {
 
 	currTeamMembers.push(matchedUser[0]["User ID"]);
 
-	const bRowURL = `https://data.ardbase.org/api/database/rows/table/2160/${teamID}/?user_field_names=true`;
+	const bRowURL = `${process.env.brow_base_url}/api/database/rows/table/${process.env.bRowTeams}/${teamID}/?user_field_names=true`;
 
 	const response = await axios.patch(
 		bRowURL,
@@ -274,7 +269,7 @@ async function removeMember(req) {
 
 	console.log(currTeamMembers);
 
-	const bRowURL = `https://data.ardbase.org/api/database/rows/table/2160/${teamID}/?user_field_names=true`;
+	const bRowURL = `${process.env.brow_base_url}/api/database/rows/table/${process.env.bRowTeams}/${teamID}/?user_field_names=true`;
 
 	const response = await axios.patch(
 		bRowURL,
@@ -294,7 +289,7 @@ async function removeMember(req) {
 async function getTeamStatus(req, teamId, UUID) {
 	let isMember = false;
 	let isOwner = false;
-	const bRowURL1 = `https://data.ardbase.org/api/database/rows/table/2160/${req.params.teamId}/?user_field_names=true`;
+	const bRowURL1 = `${process.env.brow_base_url}/api/database/rows/table/${process.env.bRowTeams}/${req.params.teamId}/?user_field_names=true`;
 
 	const response1 = await axios.get(bRowURL1, {
 		headers: {
@@ -336,7 +331,7 @@ async function removeList(req) {
 	let teamLists = req.body.teamLists;
 	console.log(req.body);
 
-	const bRowURL1 = `https://data.ardbase.org/api/database/rows/table/2160/${req.body.teamId}/?user_field_names=true`;
+	const bRowURL1 = `${process.env.brow_base_url}/api/database/rows/table/${process.env.bRowTeams}/${req.body.teamId}/?user_field_names=true`;
 	const response1 = await axios.get(bRowURL1, {
 		headers: {
 			Authorization: `Token ${process.env.BASEROW_TOKEN}`,
@@ -355,7 +350,7 @@ async function removeList(req) {
 		cleanedLists.push(currTeamLists[i].id);
 	}
 
-	const bRowURL = `https://data.ardbase.org/api/database/rows/table/2160/${req.body.teamId}/?user_field_names=true`;
+	const bRowURL = `${process.env.brow_base_url}/api/database/rows/table/${process.env.bRowTeams}/${req.body.teamId}/?user_field_names=true`;
 	const response = await axios.patch(
 		bRowURL,
 		{ Lists: cleanedLists },
@@ -376,7 +371,7 @@ async function addLists(req) {
 
 	console.log(req.body);
 
-	const bRowURL1 = `https://data.ardbase.org/api/database/rows/table/2160/${req.body.teamId}/?user_field_names=true`;
+	const bRowURL1 = `${process.env.brow_base_url}/api/database/rows/table/${process.env.bRowTeams}/${req.body.teamId}/?user_field_names=true`;
 	const response1 = await axios.get(bRowURL1, {
 		headers: {
 			Authorization: `Token ${process.env.BASEROW_TOKEN}`,
@@ -400,7 +395,7 @@ async function addLists(req) {
 	console.log(updatedLists);
 
 	// // Update the team with the new lists
-	const bRowURL = `https://data.ardbase.org/api/database/rows/table/2160/${req.body.teamId}/?user_field_names=true`;
+	const bRowURL = `${process.env.brow_base_url}/api/database/rows/table/${process.env.bRowTeams}/${req.body.teamId}/?user_field_names=true`;
 	const response = await axios.patch(
 		bRowURL,
 		{ Lists: updatedLists },

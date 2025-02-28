@@ -33,8 +33,16 @@ const {
 } = require("./airtable/listMethods.js");
 
 const listRouter = express.Router();
-const airtable = false;
 
+if (process.env.AIRTABLE_API_KEY) {
+    airtable = true; 
+} else if (process.env.BASEROW_TOKEN) {
+    airtable = false;
+}
+
+if (process.env.AIRTABLE_API_KEY && process.env.BASEROW_TOKEN) {
+    airtable = true; 
+}
 function mapFormat(dataType) {
 	const typeMap = {
 		Code: "text",

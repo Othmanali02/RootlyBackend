@@ -27,8 +27,15 @@ const {
 
 const teamRouter = express.Router();
 
-let airtable = false;
+if (process.env.AIRTABLE_API_KEY) {
+    airtable = true; 
+} else if (process.env.BASEROW_TOKEN) {
+    airtable = false;
+}
 
+if (process.env.AIRTABLE_API_KEY && process.env.BASEROW_TOKEN) {
+    airtable = true; 
+}
 teamRouter.patch(
 	"/removeList",
 	expressAsyncHandler(async (req, res) => {

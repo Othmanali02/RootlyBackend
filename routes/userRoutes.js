@@ -17,7 +17,17 @@ const cookieParser = require("cookie-parser");
 const discoveryUri = process.env.DISCOVERY_URI;
 const redirectUri = process.env.OAUTH_REDIRECT_URI;
 
-const airtable = false;
+let airtable = false; 
+
+if (process.env.AIRTABLE_API_KEY) {
+    airtable = true; 
+} else if (process.env.BASEROW_TOKEN) {
+    airtable = false;
+}
+
+if (process.env.AIRTABLE_API_KEY && process.env.BASEROW_TOKEN) {
+    airtable = true; 
+}
 
 var OAuthClient;
 authUtils.buildAuthClient(
@@ -31,6 +41,9 @@ authUtils.buildAuthClient(
 const userRouter = express.Router();
 
 userRouter.get("/login", function (req, res, next) {
+	console.log(
+		"Logging in: calling the getAuthURL function with the OAuthClient that is built using buildAuthClient"
+	);
 	res.redirect(authUtils.getAuthURL(OAuthClient));
 });
 
@@ -54,7 +67,11 @@ userRouter.get(
 			redirectUri
 		);
 		if (token) {
+			console.log(
+				"TOKEN EXISTS -- This is inside of /redirect in the backend, token verification worked"
+			);
 			console.log(token);
+
 			try {
 				if (token) {
 					const { email, preferred_username, name } = token.claims();
@@ -94,6 +111,7 @@ userRouter.get(
 						name: name,
 					});
 				} else {
+					
 					res
 						.status(400)
 						.send({ status: 400, message: "Unable to decode token" });
@@ -105,7 +123,8 @@ userRouter.get(
 					.send({ status: 500, message: "Error decoding the token" });
 			}
 		} else {
-			console.log("something is very fishy");
+			console.log("something is very fishy - throwing a 401");
+
 			res
 				.status(401)
 				.send({ status: 401, message: "Token not found or invalid" });
@@ -119,7 +138,11 @@ userRouter.get("/user-info", async (req, res) => {
 
 	if (token) {
 		try {
+			console.log("attempting to verify token");
 			const decoded = await authUtils.verifyToken(token, discoveryUri);
+			console.log("token verified!!!");
+			console.log("hi peter");
+
 			res.json({
 				username: decoded.username,
 				email: decoded.email,
