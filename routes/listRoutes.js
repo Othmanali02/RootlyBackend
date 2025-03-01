@@ -35,41 +35,39 @@ const {
 const listRouter = express.Router();
 
 if (process.env.AIRTABLE_API_KEY) {
-    airtable = true; 
+	airtable = true;
 } else if (process.env.BASEROW_TOKEN) {
-    airtable = false;
+	airtable = false;
 }
 
 if (process.env.AIRTABLE_API_KEY && process.env.BASEROW_TOKEN) {
-    airtable = true; 
+	airtable = true;
 }
 function mapFormat(dataType) {
-	const typeMap = {
-		Code: "text",
-		Nominal: "categorical",
-		Date: "date",
-		Numerical: "numeric",
-		Ordinal: "categorical",
-		Duration: "numeric",
-		Text: "text",
-	};
+    const normalizedType = (dataType || "").trim().toLowerCase();
 
-	return typeMap[dataType] ?? "text";
+    const typeMap = {
+        code: "text",
+        nominal: "categorical",
+        date: "date",
+        numerical: "numeric",
+        numeric: "numeric",
+        ordinal: "categorical",
+        duration: "numeric",
+        text: "text",
+        percent: "percent",
+        categorical: "categorical",
+        boolean: "boolean",
+        photo: "photo",
+        counter: "counter",
+        multicat: "multicat",
+        audio: "audio",
+        location: "location"
+    };
+
+    return typeMap[normalizedType] ?? "text";
 }
 
-function mapGridscore(dataType) {
-	const typeMap = {
-		Code: "text",
-		Nominal: "categorical",
-		Date: "date",
-		Numerical: "float",
-		Ordinal: "categorical",
-		Duration: "range",
-		Text: "text",
-	};
-
-	return typeMap[dataType] ?? "text";
-}
 
 function mapJsonData(item) {
 	const categories = item.cropOntologyData.scale?.validValues?.categories;
@@ -88,7 +86,7 @@ function mapJsonData(item) {
 		brapiId: item.cropOntologyData.observationVariableDbId ?? "",
 		name: item.cropOntologyData.observationVariableName ?? "",
 		description: item.cropOntologyData.trait?.description ?? null,
-		dataType: mapGridscore(item.cropOntologyData.scale?.dataType) ?? "text",
+		dataType: mapFormat(item.cropOntologyData.scale?.dataType) ?? "text",
 		allowRepeats: true,
 		setSize: item.cropOntologyData.setSize ?? 1,
 		restrictions:
@@ -102,7 +100,7 @@ function mapTsvData(item) {
 		Name: item.cropOntologyData.observationVariableName ?? "",
 		"Short Name": item.cropOntologyData.trait?.traitName ?? "",
 		Description: item.cropOntologyData.trait?.description ?? "",
-		"Data Type": mapGridscore(item.cropOntologyData.scale?.dataType) ?? "text",
+		"Data Type": mapFormat(item.cropOntologyData.scale?.dataType) ?? "text",
 		"Unit Name": item.cropOntologyData.scale?.scaleName ?? "",
 		"Unit Abbreviation": item.cropOntologyData.scale?.units ?? "",
 		"Unit Descriptions": item.cropOntologyData.scale?.description ?? "",
@@ -192,6 +190,8 @@ listRouter.post(
 				realPosition: index + 1,
 			}));
 
+			console.log(mappedData);
+
 			const headers = [
 				{ id: "trait", title: "trait" },
 				{ id: "format", title: "format" },
@@ -216,10 +216,10 @@ listRouter.post(
 			const stream = Readable.from(csvContent);
 
 			res.setHeader("Content-Type", "text/csv");
-			res.setHeader(
-				"Content-Disposition",
-				`attachment; filename=${listName}-FieldBook.csv`
-			);
+			// res.setHeader(
+			// 	"Content-Disposition",
+			// 	`attachment; filename=${listName}-FieldBook.csv`
+			// );
 
 			stream.pipe(res);
 
@@ -250,10 +250,6 @@ listRouter.post(
 			const jsonContent = createJsonFile(listData, listName);
 
 			res.setHeader("Content-Type", "application/json");
-			res.setHeader(
-				"Content-Disposition",
-				`attachment; filename=${listName}-Gridscore-JSON.json`
-			);
 
 			res.send(jsonContent);
 		} catch (error) {

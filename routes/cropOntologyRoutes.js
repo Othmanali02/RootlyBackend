@@ -8,9 +8,8 @@ const cropOntologyRouter = express.Router();
 
 cropOntologyRouter.get("/getOntologies", async (req, res) => {
 	try {
-		const response = await axios.get(
-			`${process.env.cropOntologyURL}/brapi/v2/ontologies?pageSize=100`
-		);
+		const cURL = `${process.env.cropOntologyURL}/brapi/v2/ontologies?pageSize=100`;
+		const response = await axios.get(cURL);
 		console.log(response.data);
 		let results = response.data.result.data;
 		res.status(200).json({

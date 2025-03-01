@@ -115,9 +115,7 @@ async function pushCredentialsToAirtable(name, email) {
 			}
 		}
 
-		const matchedUser = allUsers.find(
-			(item) => item.fields.Email === email
-		);
+		const matchedUser = allUsers.find((item) => item.fields.Email === email);
 		let userID = "";
 
 		console.log(matchedUser);
@@ -127,9 +125,11 @@ async function pushCredentialsToAirtable(name, email) {
 		} else {
 			let genNewUserID = await genID();
 			const req_data = {
-				"User ID": genNewUserID,
-				Name: name,
-				Email: email,
+				fields: {
+					"User ID": genNewUserID,
+					Name: name,
+					Email: email,
+				},
 			};
 
 			console.log(req_data);
