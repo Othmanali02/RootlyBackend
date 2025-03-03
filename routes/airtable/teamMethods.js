@@ -334,9 +334,6 @@ async function addMemberA(req) {
 		(item) => item.fields.Email === memberEmail
 	);
 
-	if (!matchedUser) {
-		return res.status(404).json({ message: "User not found" });
-	}
 
 	currTeamMembers.push(matchedUser.id);
 	console.log(req.body);

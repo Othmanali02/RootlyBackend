@@ -216,6 +216,8 @@ async function getListInfoA(req) {
 		observationVariableDbIds: variableDbIds,
 	};
 
+	console.log(variableDbIds);
+
 	let finalRes = [];
 	const response2 = await axios.post(cropOntologyUrl, reqBody);
 
