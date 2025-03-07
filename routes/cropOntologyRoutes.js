@@ -12,6 +12,7 @@ cropOntologyRouter.get("/getOntologies", async (req, res) => {
 		const response = await axios.get(cURL);
 		console.log(response.data);
 		let results = response.data.result.data;
+		console.log(results);
 		res.status(200).json({
 			results,
 		});
@@ -30,7 +31,7 @@ cropOntologyRouter.get("/getVariables", async (req, res) => {
 		const response = await axios.get(
 			`${process.env.cropOntologyURL}/brapi/v2/variables?pageSize=100&ontologyDbId=${ontologyDbID}&traitClass=${traitClass}`
 		);
-		console.log(response.data);
+		console.log(response.data.result);
 		let result = response.data.result;
 		res.status(200).json({
 			result,
@@ -48,7 +49,7 @@ cropOntologyRouter.get("/getVariable", async (req, res) => {
 			`${process.env.cropOntologyURL}/brapi/v2/variables?pageSize=100&observationVariableDbId=${observationVariableDbId}`
 		);
 
-		let result = response.data.result;
+		let result = response.data.result; // this right here
 		res.status(200).json({
 			result,
 		});
