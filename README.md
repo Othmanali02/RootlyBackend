@@ -38,8 +38,8 @@ Rootly supports **Baserow** and **Airtable** as a RESTful database backend. The 
 
 | Service  |
 |----------|
-| **Airtable**  | ![airtablecropped](https://github.com/user-attachments/assets/15f199c0-d3db-48f5-a6f2-d8af05db148a)
-| **Baserow**   | ![baserow](https://github.com/user-attachments/assets/bd187c9f-35a5-4906-a9e1-4e61075a58a7)
+| **Airtable** ![airtablecropped](https://github.com/user-attachments/assets/15f199c0-d3db-48f5-a6f2-d8af05db148a)
+| **Baserow** ![baserow](https://github.com/user-attachments/assets/bd187c9f-35a5-4906-a9e1-4e61075a58a7)
 
 ### 🔧 Configuration
 
