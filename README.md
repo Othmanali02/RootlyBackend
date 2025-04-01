@@ -54,6 +54,12 @@ AIRTABLE_API_KEY=your-airtable-api-key
 - If **both** are set, Rootly defaults to **Airtable**.
 - You will also need to rename ```dummyenv.env``` to .env and fill out the required enviornment variables
 
+
+## Setting up the database:  
+- `./baserow-setup.md`
+- `./airtable-setup.md` 
+
+
 ---
 
 ## 📦 Installation & Setup
