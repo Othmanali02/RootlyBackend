@@ -56,9 +56,8 @@ AIRTABLE_API_KEY=your-airtable-api-key
 
 
 ## Setting up the database:  
-- `./baserow-setup.md`
-- `./airtable-setup.md` 
-
+- [Setting Up a Baserow Database](./baserow-setup.md)
+- [Setting Up an Airtable Database](./airtable-setup.md)
 
 ---
 
