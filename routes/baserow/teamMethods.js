@@ -304,7 +304,9 @@ async function getTeamStatus(req, teamId, UUID) {
 	const ownerMatch = team["Leader"][0].value === UUID;
 	console.log(ownerMatch);
 
-	const userMatch = team["User ID"].some((user) => user.value === UUID);
+	const userMatch =
+		Array.isArray(team["User ID"]) &&
+		team["User ID"].some((user) => user.value === UUID);
 
 	console.log(team.Name);
 	console.log(ownerMatch);

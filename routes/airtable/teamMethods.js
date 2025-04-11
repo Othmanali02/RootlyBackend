@@ -334,7 +334,6 @@ async function addMemberA(req) {
 		(item) => item.fields.Email === memberEmail
 	);
 
-
 	currTeamMembers.push(matchedUser.id);
 	console.log(req.body);
 	// Update the team with the new members
@@ -483,6 +482,7 @@ async function getTeamStatusA(req, teamId, UUID) {
 	if (!team) {
 		return res.status(404).json({ message: "Team not found" });
 	}
+
 	let userObj = await getUserByID(UUID);
 
 	const teamMatch = team.id === teamId;
@@ -490,9 +490,9 @@ async function getTeamStatusA(req, teamId, UUID) {
 	const ownerMatch =
 		team.fields["Leader"] && team.fields["Leader"][0] === userObj.id;
 
-	const userMatch = team.fields["User ID"].some(
-		(userId) => userId === userObj.id
-	);
+	const userMatch =
+		Array.isArray(team.fields["User ID"]) &&
+		team.fields["User ID"].some((userId) => userId === userObj.id);
 
 	console.log(userMatch);
 	console.log(ownerMatch);
